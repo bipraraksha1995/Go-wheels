@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard - GoWheels</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            color: #0F1111;
+            line-height: 1.4;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .user-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .action-btn {
+            background: none;
+            border: 1px solid #fff;
+            color: white;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .container {
+            max-width: 100%;
+            padding: 16px;
+        }
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+        .screen-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #DDD;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #0066C0;
+        }
+        .screen-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .item {
+            background: white;
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .item:active {
+            background: #F7F8F8;
+        }
+        .item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .item h3 {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0;
+        }
+        .form-section {
+            background: white;
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .input-group {
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #0F1111;
+        }
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #DDD;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+        .image-upload-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .image-placeholder {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px dashed #DDD;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #F7F8F8;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            width: 100%;
+        }
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .image-upload-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-top">
+            <div class="logo">GoWheels Seller</div>
+            <div class="user-actions">
+                <button class="action-btn" onclick="window.location.href='/seller-vehicles/'">My Vehicles</button>
+                <button class="action-btn" onclick="window.location.href='/user-browse-categories/'">Browse</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Categories Screen -->
+        <div id="categories-screen" class="screen active">
+            <div class="screen-header">
+                <div class="screen-title">Select Category</div>
+            </div>
+            <div id="categories-grid" class="grid"></div>
+        </div>
+        
+        <!-- Brands Screen -->
+        <div id="brands-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="showCategories()">‹</button>
+                <div class="screen-title" id="brands-title">Brands</div>
+            </div>
+            <div id="brands-grid" class="grid"></div>
+        </div>
+        
+        <!-- Models Screen -->
+        <div id="models-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="showBrands()">‹</button>
+                <div class="screen-title" id="models-title">Models</div>
+            </div>
+            <div id="models-grid" class="grid"></div>
+        </div>
+        
+        <!-- Images Screen -->
+        <div id="images-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="showModels()">‹</button>
+                <div class="screen-title">Upload Images</div>
+            </div>
+            <div class="form-section">
+                <div class="image-upload-grid">
+                    <div class="image-upload-item">
+                        <input type="file" id="image1" accept="image/*" hidden>
+                        <div class="image-placeholder" onclick="document.getElementById('image1').click()">
+                            <span style="font-size: 24px; color: #999;">+</span>
+                            <p style="font-size: 10px; color: #666; margin: 4px 0 0 0;">Image 1</p>
+                        </div>
+                    </div>
+                    <div class="image-upload-item">
+                        <input type="file" id="image2" accept="image/*" hidden>
+                        <div class="image-placeholder" onclick="document.getElementById('image2').click()">
+                            <span style="font-size: 24px; color: #999;">+</span>
+                            <p style="font-size: 10px; color: #666; margin: 4px 0 0 0;">Image 2</p>
+                        </div>
+                    </div>
+                    <div class="image-upload-item">
+                        <input type="file" id="image3" accept="image/*" hidden>
+                        <div class="image-placeholder" onclick="document.getElementById('image3').click()">
+                            <span style="font-size: 24px; color: #999;">+</span>
+                            <p style="font-size: 10px; color: #666; margin: 4px 0 0 0;">Image 3</p>
+                        </div>
+                    </div>
+                    <div class="image-upload-item">
+                        <input type="file" id="image4" accept="image/*" hidden>
+                        <div class="image-placeholder" onclick="document.getElementById('image4').click()">
+                            <span style="font-size: 24px; color: #999;">+</span>
+                            <p style="font-size: 10px; color: #666; margin: 4px 0 0 0;">Image 4</p>
+                        </div>
+                    </div>
+                    <div class="image-upload-item">
+                        <input type="file" id="image5" accept="image/*" hidden>
+                        <div class="image-placeholder" onclick="document.getElementById('image5').click()">
+                            <span style="font-size: 24px; color: #999;">+</span>
+                            <p style="font-size: 10px; color: #666; margin: 4px 0 0 0;">Image 5</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" onclick="showDetails()" style="margin-top: 16px;">Next</button>
+            </div>
+        </div>
+        
+        <!-- Details Screen -->
+        <div id="details-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="showImages()">‹</button>
+                <div class="screen-title">Vehicle Details</div>
+            </div>
+            <form id="vehicle-form" class="form-section">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group">
+                        <label>Owner Name</label>
+                        <input type="text" id="owner-name" placeholder="Enter owner name" value="{{ user_name }}">
+                    </div>
+                    <div class="input-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="phone" placeholder="Enter phone number" value="{{ user_phone }}">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group">
+                        <label>Pincode</label>
+                        <input type="text" id="pincode" placeholder="400001" maxlength="6" value="{{ user_pincode }}">
+                    </div>
+                    <div class="input-group">
+                        <label>Village</label>
+                        <input type="text" id="village" placeholder="Enter village" value="{{ user_village }}">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group">
+                        <label>Year</label>
+                        <input type="number" id="year" min="2010" max="2025" placeholder="2023">
+                    </div>
+                    <div class="input-group">
+                        <label>Unit Type</label>
+                        <select id="unit-type" onchange="showUnitInput()">
+                            <option value="">Select Unit Type</option>
+                            <option value="unit_price">Unit Price</option>
+                            <option value="square_feet">Square Feet</option>
+                            <option value="cubic_feet">Cubic Feet</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="unit-input-section" class="input-group" style="display: none;">
+                    <label id="unit-input-label">Value (₹)</label>
+                    <input type="number" id="unit-value" min="1" placeholder="Enter value">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group">
+                        <label>Per Hour Price (₹)</label>
+                        <input type="number" id="hourly-price" min="1" placeholder="500">
+                    </div>
+                    <div class="input-group">
+                        <label>Per Day Price (₹)</label>
+                        <input type="number" id="daily-price" min="1" placeholder="2500">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Date Added</label>
+                    <input type="text" id="date-added" readonly>
+                </div>
+                <button type="submit" class="btn">List My Vehicle</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let selectedCategory = '';
+        let selectedBrand = '';
+        let selectedModel = '';
+        let allData = {};
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCategories();
+            
+            // Set today's date
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            document.getElementById('date-added').value = `${day}/${month}/${year}`;
+        });
+        
+        function loadCategories() {
+            fetch('/get-all-admin-data/')
+                .then(response => response.json())
+                .then(data => {
+                    allData = data;
+                    const grid = document.getElementById('categories-grid');
+                    let html = '';
+                    
+                    if (data.success && data.categories && Object.keys(data.categories).length > 0) {
+                        Object.keys(data.categories).forEach((groupName, index) => {
+                            data.categories[groupName].forEach(category => {
+                                html += `<div class="item" onclick="selectCategory('${groupName}', '${category.name}')">`;
+                                html += `<img src="${category.image}" alt="${category.name}">`;
+                                html += `<h3>${category.name}</h3>`;
+                                html += '</div>';
+                            });
+                        });
+                    } else {
+                        html = '<p style="color: #565959; text-align: center; grid-column: 1 / -1;">No categories available</p>';
+                    }
+                    
+                    grid.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error loading categories:', error);
+                });
+        }
+        
+        function selectCategory(groupName, categoryName) {
+            selectedCategory = groupName;
+            document.getElementById('brands-title').textContent = categoryName + ' - Brands';
+            
+            const grid = document.getElementById('brands-grid');
+            let html = '';
+            
+            const key = groupName + '_' + categoryName;
+            const brands = allData.brands[key] || [];
+            
+            brands.forEach(brand => {
+                html += `<div class="item" onclick="selectBrand('${brand.name}', '${categoryName}')">`;
+                html += `<img src="${brand.image}" alt="${brand.name}">`;
+                html += `<h3>${brand.name}</h3>`;
+                html += '</div>';
+            });
+            
+            grid.innerHTML = html || '<p style="color: #565959; text-align: center; grid-column: 1 / -1;">No brands available</p>';
+            showScreen('brands-screen');
+        }
+        
+        function selectBrand(brandName, categoryName) {
+            selectedBrand = brandName;
+            document.getElementById('models-title').textContent = brandName + ' - Models';
+            
+            const grid = document.getElementById('models-grid');
+            let html = '';
+            
+            const key = selectedCategory + '_' + categoryName + '_' + brandName;
+            const models = allData.models[key] || [];
+            
+            models.forEach(model => {
+                html += `<div class="item" onclick="selectModel('${model.name}')">`;
+                html += `<img src="${model.image}" alt="${model.name}">`;
+                html += `<h3>${model.name}</h3>`;
+                html += '</div>';
+            });
+            
+            grid.innerHTML = html || '<p style="color: #565959; text-align: center; grid-column: 1 / -1;">No models available</p>';
+            showScreen('models-screen');
+        }
+        
+        function selectModel(modelName) {
+            selectedModel = modelName;
+            showScreen('images-screen');
+        }
+        
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+        
+        function showCategories() {
+            showScreen('categories-screen');
+        }
+        
+        function showBrands() {
+            showScreen('brands-screen');
+        }
+        
+        function showModels() {
+            showScreen('models-screen');
+        }
+        
+        function showImages() {
+            showScreen('images-screen');
+        }
+        
+        function showDetails() {
+            showScreen('details-screen');
+        }
+        
+        // Image preview
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const placeholder = input.nextElementSibling;
+                        placeholder.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        });
+        
+        // Form submission
+        document.getElementById('vehicle-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('selected_category', document.getElementById('brands-title').textContent.split(' - ')[0]);
+            formData.append('selected_brand', selectedBrand);
+            formData.append('selected_model', selectedModel);
+            formData.append('owner_name', document.getElementById('owner-name').value);
+            formData.append('pincode', document.getElementById('pincode').value);
+            formData.append('village', document.getElementById('village').value);
+            formData.append('year', document.getElementById('year').value);
+            formData.append('hourly_price', document.getElementById('hourly-price').value);
+            formData.append('daily_price', document.getElementById('daily-price').value);
+            
+            formData.append('unit_type', document.getElementById('unit-type').value);
+            formData.append('unit_value', document.getElementById('unit-value').value);
+            formData.append('date_added', document.getElementById('date-added').value);
+            
+            // Add images
+            for (let i = 1; i <= 5; i++) {
+                const fileInput = document.getElementById('image' + i);
+                if (fileInput.files[0]) {
+                    formData.append('vehicle_images', fileInput.files[0]);
+                }
+            }
+            
+            fetch('/seller-dashboard-form/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Vehicle listed successfully!');
+                    window.location.href = '/user-browse-categories/';
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting form');
+            });
+        });
+        
+        function showUnitInput() {
+            const unitType = document.getElementById('unit-type').value;
+            const unitSection = document.getElementById('unit-input-section');
+            const unitLabel = document.getElementById('unit-input-label');
+            
+            if (unitType) {
+                unitSection.style.display = 'block';
+                
+                if (unitType === 'unit_price') {
+                    unitLabel.textContent = 'Unit Price (₹)';
+                } else if (unitType === 'square_feet') {
+                    unitLabel.textContent = 'Square Feet Price (₹)';
+                } else if (unitType === 'cubic_feet') {
+                    unitLabel.textContent = 'Cubic Feet Price (₹)';
+                }
+            } else {
+                unitSection.style.display = 'none';
+            }
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

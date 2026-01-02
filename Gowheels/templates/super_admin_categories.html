@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Category Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c1810 100%);
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 2px solid #FFD700;
+        }
+        h1 { color: #FFD700; margin-bottom: 2rem; }
+        .form-section {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%);
+            padding: 2.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        .form-section h2 {
+            color: #FFD700;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            color: #FFD700;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        select, input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #FFF;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+        .btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: #FFF;
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(40, 167, 69, 0.4);
+        }
+        .add-form {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛞 Super Admin - Category Management</h1>
+        
+        <!-- Main Menu Screen -->
+        <div id="main-menu" style="display: block;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showScreen('add-groups')" class="btn" style="margin: 1rem; padding: 2rem; font-size: 1.2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">➕ Add Groups</button>
+                <button onclick="showScreen('add-info')" class="btn" style="margin: 1rem; padding: 2rem; font-size: 1.2rem; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">ℹ️ Add Info</button>
+                <button onclick="showScreen('list')" class="btn" style="margin: 1rem; padding: 2rem; font-size: 1.2rem; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);">📋 List</button>
+            </div>
+            <div style="text-align: center;">
+                <button onclick="showScreen('search')" class="btn" style="margin: 1rem; padding: 2rem; font-size: 1.2rem; background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);">🔍 Search</button>
+                <button onclick="showScreen('subadmin')" class="btn" style="margin: 1rem; padding: 2rem; font-size: 1.2rem; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">👥 Sub Admin</button>
+                <button onclick="showScreen('ads')" class="btn" style="margin: 1rem; padding: 2rem; font-size: 1.2rem; background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">📢 Ads</button>
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <button onclick="window.location.href='/super-admin-logout/'" class="btn" style="padding: 1.5rem 3rem; font-size: 1.1rem; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">🚪 Logout</button>
+            </div>
+            
+            <!-- All Images Display on Main Menu -->
+            <div class="form-section">
+                <h2>📸 All Added Images</h2>
+                
+                <div id="main-category-images" style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;"></div>
+                
+                <div id="main-brand-images" style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;"></div>
+                
+                <div id="main-model-images" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem;"></div>
+            </div>
+        </div>
+        
+        <!-- Add Groups Screen -->
+        <div id="add-groups-screen" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showScreen('main-menu')" class="btn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">← Back to Menu</button>
+            </div>
+            <div class="form-section">
+                <h2>➕ Create New Group</h2>
+                <div class="form-group" style="max-width: 400px; margin: 0 auto;">
+                    <label>Enter Group Name</label>
+                    <input type="text" id="group-input" placeholder="Enter group name (e.g., Cars, Bikes, Trucks)" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                    <button onclick="createGroup()" class="btn" style="margin-top: 1rem; width: 100%;">Create Group</button>
+                </div>
+                <div id="created-groups-display" style="margin-top: 2rem;"></div>
+            </div>
+        </div>
+        
+        <!-- List Screen -->
+        <div id="list-screen" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showScreen('main-menu')" class="btn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">← Back to Menu</button>
+            </div>
+            <div class="form-section">
+                <h2>📋 List Options</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 800px; margin: 0 auto;">
+                    <div onclick="showUserListModal()" style="background: rgba(102, 126, 234, 0.2); padding: 2rem; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid #667eea; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+                        <h3 style="color: #667eea; margin-bottom: 1rem;">User List</h3>
+                        <p style="color: #F5F5DC;">View all registered users with their details</p>
+                    </div>
+                    <div onclick="showProductListModal()" style="background: rgba(40, 167, 69, 0.2); padding: 2rem; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid #28a745; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
+                        <h3 style="color: #28a745; margin-bottom: 1rem;">Product List</h3>
+                        <p style="color: #F5F5DC;">View all groups, categories, brands and models</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User List Modal -->
+        <div id="user-list-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); border-radius: 20px; padding: 2rem; width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto; border: 2px solid #FFD700;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="color: #FFD700; margin: 0;">User List</h2>
+                    <button onclick="closeUserList()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <input type="text" id="user-search" placeholder="Search by name, phone, pincode or ID..." style="width: 100%; padding: 0.8rem; border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #FFFFFF; font-size: 1rem;" oninput="filterUsers()">
+                </div>
+                <div id="user-list-content" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
+        
+        <!-- Product List Modal -->
+        <div id="product-list-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); border-radius: 20px; padding: 2rem; width: 90%; max-width: 900px; max-height: 80vh; overflow-y: auto; border: 2px solid #FFD700;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="color: #FFD700; margin: 0;">Product List</h2>
+                    <button onclick="closeProductList()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <input type="text" id="product-search" placeholder="Search groups, categories, brands or models..." style="width: 100%; padding: 0.8rem; border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #FFFFFF; font-size: 1rem;" oninput="filterProducts()">
+                </div>
+                <div id="product-list-content" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
+        <!-- Sub Admin Screen -->
+        <div id="subadmin-screen" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showScreen('main-menu')" class="btn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">← Back to Menu</button>
+            </div>
+            <div class="form-section">
+                <h2>👥 Sub Admin Management</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 800px; margin: 0 auto;">
+                    <div onclick="showCreateSubAdminModal()" style="background: rgba(40, 167, 69, 0.2); padding: 2rem; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid #28a745; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">➕</div>
+                        <h3 style="color: #28a745; margin-bottom: 1rem;">Create Sub Admin</h3>
+                        <p style="color: #F5F5DC;">Add new sub admin with credentials</p>
+                    </div>
+                    <div onclick="showSubAdminListModal()" style="background: rgba(23, 162, 184, 0.2); padding: 2rem; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid #17a2b8; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
+                        <h3 style="color: #17a2b8; margin-bottom: 1rem;">List Sub Admins</h3>
+                        <p style="color: #F5F5DC;">View and search all sub admins</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Create Sub Admin Modal -->
+        <div id="create-subadmin-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); border-radius: 20px; padding: 2rem; width: 90%; max-width: 600px; border: 2px solid #FFD700;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="color: #FFD700; margin: 0;">Create Sub Admin</h2>
+                    <button onclick="closeCreateSubAdmin()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                </div>
+                <form id="create-subadmin-form">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="color: #FFD700; display: block; margin-bottom: 0.5rem;">Name</label>
+                        <input type="text" id="subadmin-name" required style="width: 100%; padding: 0.8rem; border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #FFFFFF; font-size: 1rem;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="color: #FFD700; display: block; margin-bottom: 0.5rem;">Phone</label>
+                        <input type="tel" id="subadmin-phone" required style="width: 100%; padding: 0.8rem; border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #FFFFFF; font-size: 1rem;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="color: #FFD700; display: block; margin-bottom: 0.5rem;">State</label>
+                        <input type="text" id="subadmin-state" required style="width: 100%; padding: 0.8rem; border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #FFFFFF; font-size: 1rem;">
+                    </div>
+                    <div style="margin-bottom: 2rem;">
+                        <label style="color: #FFD700; display: block; margin-bottom: 0.5rem;">Role</label>
+                        <select id="subadmin-role" required style="width: 100%; padding: 0.8rem; border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #FFFFFF; font-size: 1rem;">
+                            <option value="">Select Role</option>
+                            <option value="state_admin">State Admin</option>
+                            <option value="regional_admin">Regional Admin</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">Create Sub Admin</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Sub Admin List Modal -->
+        <div id="subadmin-list-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); border-radius: 20px; padding: 2rem; width: 90%; max-width: 900px; max-height: 80vh; overflow-y: auto; border: 2px solid #FFD700;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="color: #FFD700; margin: 0;">Sub Admin List</h2>
+                    <button onclick="closeSubAdminList()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <input type="text" id="subadmin-search" placeholder="Search by name, phone, state or role..." style="width: 100%; padding: 0.8rem; border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #FFFFFF; font-size: 1rem;" oninput="filterSubAdmins()">
+                </div>
+                <div id="subadmin-list-content" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
+        
+        <!-- Add Info Screen -->
+        <div id="add-info-screen" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showScreen('main-menu')" class="btn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">← Back to Menu</button>
+            </div>
+            <div class="form-section">
+                <h2>ℹ️ Add Category/Brand/Model Info</h2>
+                <div id="info-groups-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem;"></div>
+            </div>
+        </div>
+        <div id="added-groups-screen" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showScreen('add-groups-screen')" class="btn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">← Back to Groups</button>
+            </div>
+            <div class="form-section">
+                <h2>📋 All Added Groups</h2>
+                <div id="all-groups-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem;"></div>
+            </div>
+        </div>
+        
+        <!-- Category Screen -->
+        <div id="category-screen" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showAddedGroupsScreen()" class="btn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">← Back to Groups</button>
+            </div>
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <h1 id="category-group-header" style="color: #FFD700; font-size: 2rem;"></h1>
+            </div>
+            <div class="add-form">
+                <h3 style="color: #FFD700; margin-bottom: 1rem;">Add New Category</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end;">
+                    <div>
+                        <label>Category Name</label>
+                        <input type="text" id="categoryName" placeholder="Enter category name">
+                    </div>
+                    <div>
+                        <label>Category Image</label>
+                        <input type="file" id="categoryImage" accept="image/*">
+                    </div>
+                    <button onclick="addCategory()" class="btn">Add Category</button>
+                </div>
+            </div>
+            <div class="form-section">
+                <h2>📂 Category Management</h2>
+                <div id="category-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 2rem;"></div>
+            </div>
+        </div>
+        
+        <!-- Brand Screen -->
+        <div id="brand-screen" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showCategoryScreen()" class="btn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">← Back to Categories</button>
+            </div>
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <h1 id="brand-group-header" style="color: #FFD700; font-size: 2rem;"></h1>
+                <div id="brand-category-info" style="margin: 1rem 0;"></div>
+            </div>
+            <div class="add-form">
+                <h3 style="color: #FFD700; margin-bottom: 1rem;">Add New Brand</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end;">
+                    <div>
+                        <label>Brand Name</label>
+                        <input type="text" id="brandName" placeholder="Enter brand name">
+                    </div>
+                    <div>
+                        <label>Brand Image</label>
+                        <input type="file" id="brandImage" accept="image/*">
+                    </div>
+                    <button onclick="addBrand()" class="btn">Add Brand</button>
+                </div>
+            </div>
+            <div class="form-section">
+                <h2>🏷️ Brand Management</h2>
+                <div id="brand-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 2rem;"></div>
+            </div>
+        </div>
+        
+        <!-- Model Screen -->
+        <div id="model-screen" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showBrandScreen()" class="btn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">← Back to Brands</button>
+            </div>
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <h1 id="model-group-header" style="color: #FFD700; font-size: 2rem;"></h1>
+                <div id="model-category-info" style="margin: 1rem 0;"></div>
+                <div id="model-brand-info" style="margin: 1rem 0;"></div>
+            </div>
+            <div class="add-form">
+                <h3 style="color: #FFD700; margin-bottom: 1rem;">Add New Model</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end;">
+                    <div>
+                        <label>Model Name</label>
+                        <input type="text" id="modelName" placeholder="Enter model name">
+                    </div>
+                    <div>
+                        <label>Model Image</label>
+                        <input type="file" id="modelImage" accept="image/*">
+                    </div>
+                    <button onclick="addModel()" class="btn">Add Model</button>
+                </div>
+            </div>
+            <div class="form-section">
+                <h2>🚗 Model Management</h2>
+                <div id="model-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 2rem;"></div>
+            </div>
+            
+            <!-- All Images Display -->
+            <div class="form-section">
+                <h2>📸 All Images</h2>
+                
+                <div id="all-category-images" style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;"></div>
+                
+                <div id="all-brand-images" style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;"></div>
+                
+                <div id="all-model-images" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize data storage with localStorage persistence
+        function loadFromStorage() {
+            window.createdGroups = JSON.parse(localStorage.getItem('createdGroups')) || [];
+            window.groupCategories = JSON.parse(localStorage.getItem('groupCategories')) || {};
+            window.categoryBrands = JSON.parse(localStorage.getItem('categoryBrands')) || {};
+            window.brandModels = JSON.parse(localStorage.getItem('brandModels')) || {};
+        }
+        
+        function saveToStorage() {
+            localStorage.setItem('createdGroups', JSON.stringify(window.createdGroups));
+            localStorage.setItem('groupCategories', JSON.stringify(window.groupCategories));
+            localStorage.setItem('categoryBrands', JSON.stringify(window.categoryBrands));
+            localStorage.setItem('brandModels', JSON.stringify(window.brandModels));
+        }
+        
+        // Load data on page load
+        loadFromStorage();
+        loadGroupsFromDatabase();
+        loadAllDataFromDatabase();
+        
+        function loadGroupsFromDatabase() {
+            fetch('/get-admin-groups/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.createdGroups = data.groups;
+                    saveToStorage();
+                }
+            })
+            .catch(error => console.error('Error loading groups:', error));
+        }
+        
+        function loadAllDataFromDatabase() {
+            fetch('/get-all-admin-data/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.groupCategories = data.categories || {};
+                    window.categoryBrands = data.brands || {};
+                    window.brandModels = data.models || {};
+                    saveToStorage();
+                    displayAllImages();
+                }
+            })
+            .catch(error => console.error('Error loading data:', error));
+        }
+
+        function showScreen(screenName) {
+            ['main-menu', 'add-groups-screen', 'add-info-screen', 'list-screen', 'subadmin-screen', 'added-groups-screen', 'category-screen', 'brand-screen', 'model-screen'].forEach(screen => {
+                const element = document.getElementById(screen);
+                if (element) element.style.display = 'none';
+            });
+            
+            if (screenName === 'add-groups') {
+                document.getElementById('add-groups-screen').style.display = 'block';
+            } else if (screenName === 'add-info') {
+                document.getElementById('add-info-screen').style.display = 'block';
+                displayInfoGroups();
+            } else if (screenName === 'list') {
+                document.getElementById('list-screen').style.display = 'block';
+            } else if (screenName === 'subadmin') {
+                document.getElementById('subadmin-screen').style.display = 'block';
+            } else {
+                const targetScreen = document.getElementById(screenName);
+                if (targetScreen) targetScreen.style.display = 'block';
+            }
+        }
+        
+        function createGroup() {
+            const groupName = document.getElementById('group-input').value.trim();
+            if (!groupName) {
+                alert('Please enter a group name');
+                return;
+            }
+            
+            // Check if group already exists
+            if (window.createdGroups.includes(groupName)) {
+                alert('Group name already exists. Please enter a different name.');
+                return;
+            }
+            
+            // Save group to database
+            const formData = new FormData();
+            formData.append('type', 'group');
+            formData.append('name', groupName);
+            
+            fetch('/save-admin-data/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (!window.createdGroups.includes(groupName)) {
+                        window.createdGroups.push(groupName);
+                        saveToStorage();
+                    }
+                    updateCreatedGroupsDisplay();
+                    document.getElementById('group-input').value = '';
+                    alert('Group created successfully!');
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to create group'));
+                }
+            })
+            .catch(error => {
+                alert('Error creating group');
+            });
+        }
+        
+        function updateCreatedGroupsDisplay() {
+            const displayDiv = document.getElementById('created-groups-display');
+            if (!window.createdGroups || window.createdGroups.length === 0) {
+                displayDiv.innerHTML = '';
+                return;
+            }
+            
+            let html = '<h3 style="color: #FFD700; text-align: center; margin-bottom: 1rem;">Created Groups</h3><div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; max-width: 800px; margin: 0 auto;">';
+            
+            window.createdGroups.forEach(group => {
+                const letter = group.replace('group', '');
+                html += `<div style="position: relative;"><button class="btn" style="padding: 1rem; width: 100%;">Group ${letter}</button><button onclick="deleteGroup('${group}')" style="position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; font-size: 12px; cursor: pointer;">×</button></div>`;
+            });
+            
+            html += '</div><div style="text-align: center; margin-top: 2rem;"><button onclick="showScreen(\'add-info\')" class="btn" style="padding: 1.5rem 3rem; font-size: 1.2rem; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">Go to Add Info</button></div>';
+            displayDiv.innerHTML = html;
+        }
+        
+        function deleteGroup(groupToDelete) {
+            if (confirm(`Delete ${groupToDelete.replace('group', 'Group ')}?`)) {
+                window.createdGroups = window.createdGroups.filter(group => group !== groupToDelete);
+                saveToStorage();
+                updateCreatedGroupsDisplay();
+            }
+        }
+        
+        function showAddedGroupsScreen() {
+            showScreen('added-groups-screen');
+            displayAllGroups();
+        }
+        
+        function displayInfoGroups() {
+            const displayDiv = document.getElementById('info-groups-display');
+            if (!window.createdGroups || window.createdGroups.length === 0) {
+                displayDiv.innerHTML = '<p style="text-align: center; color: #666;">No groups created yet. Please create groups first.</p>';
+                return;
+            }
+            
+            let html = '';
+            window.createdGroups.forEach(group => {
+                const letter = group.replace('group', '');
+                const categories = window.groupCategories[group] || [];
+                
+                html += `<div onclick="showCategoryScreen('${group}')" style="text-align: center; background: rgba(255,215,0,0.1); border: 2px solid #FFD700; border-radius: 15px; padding: 2rem; cursor: pointer;">
+                    <h3 style="color: #FFD700; margin-bottom: 1rem;">Group ${letter}</h3>
+                    <p style="color: #666;">${categories.length} categories</p>
+                </div>`;
+            });
+            
+            displayDiv.innerHTML = html;
+        }
+        
+        function showCategoryScreen(groupName) {
+            window.currentGroup = groupName || '';
+            const letter = (window.currentGroup || '').replace('group', '') || 'Unknown';
+            document.getElementById('category-group-header').textContent = `Group ${letter} - Categories`;
+            
+            showScreen('category-screen');
+            loadCategories();
+        }
+        
+        function loadCategories() {
+            const categoryDiv = document.getElementById('category-display');
+            const categories = window.groupCategories[window.currentGroup] || [];
+            
+            if (categories.length > 0) {
+                let html = '';
+                categories.forEach(category => {
+                    html += `<div onclick="showBrandScreen('${category.name}', '${category.image}')" style="text-align: center; background: rgba(40,167,69,0.2); border: 2px solid #28a745; border-radius: 15px; padding: 1.5rem; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='#28a745'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#28a745'">
+                        <img src="${category.image}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover; margin-bottom: 1rem;" onerror="this.style.display='none'">
+                        <h4 style="color: #28a745; margin: 0 0 0.5rem 0;">${category.name}</h4>
+                        <p style="color: #20c997; font-size: 0.8rem; margin: 0;">Click to view brands</p>
+                    </div>`;
+                });
+                categoryDiv.innerHTML = html;
+            } else {
+                categoryDiv.innerHTML = '<p style="text-align: center; color: #666;">No categories added yet</p>';
+            }
+        }
+        
+        function addCategory() {
+            const categoryName = document.getElementById('categoryName').value;
+            const categoryImage = document.getElementById('categoryImage').files[0];
+            
+            if (!categoryName) {
+                alert('Please enter category name');
+                return;
+            }
+            
+            if (!categoryImage) {
+                alert('Please select category image');
+                return;
+            }
+            
+            if (!window.groupCategories[window.currentGroup]) {
+                window.groupCategories[window.currentGroup] = [];
+            }
+            
+            const imageUrl = URL.createObjectURL(categoryImage);
+            window.groupCategories[window.currentGroup].push({
+                name: categoryName,
+                image: imageUrl
+            });
+            
+            saveToStorage();
+            
+            // Save to database
+            saveToDatabase('category', categoryName, categoryImage);
+            
+            loadCategories();
+            
+            document.getElementById('categoryName').value = '';
+            document.getElementById('categoryImage').value = '';
+            
+            alert('Category added successfully!');
+            displayAllImages();
+        }
+        
+        function showBrandScreen(categoryName, categoryImage) {
+            window.currentCategory = categoryName || '';
+            window.currentCategoryImage = categoryImage || '';
+            
+            const letter = (window.currentGroup || '').replace('group', '') || 'Unknown';
+            document.getElementById('brand-group-header').textContent = `Group ${letter}`;
+            document.getElementById('brand-category-info').innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 1rem;"><img src="${categoryImage || ''}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover;" onerror="this.style.display='none'"><h3 style="color: #FFD700; margin: 0;">${categoryName || 'Unknown'}</h3></div>`;
+            
+            showScreen('brand-screen');
+            loadBrands();
+        }
+        
+        function loadBrands() {
+            const brandDiv = document.getElementById('brand-display');
+            const key = `${window.currentGroup}_${window.currentCategory}`;
+            const brands = window.categoryBrands[key] || [];
+            
+            if (brands.length > 0) {
+                let html = '';
+                brands.forEach(brand => {
+                    html += `<div onclick="showModelScreen('${brand.name}', '${brand.image}')" style="text-align: center; background: rgba(23,162,184,0.2); border: 2px solid #17a2b8; border-radius: 15px; padding: 1.5rem; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='#17a2b8'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#17a2b8'">
+                        <img src="${brand.image}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover; margin-bottom: 1rem;" onerror="this.style.display='none'">
+                        <h4 style="color: #17a2b8; margin: 0 0 0.5rem 0;">${brand.name}</h4>
+                        <p style="color: #20c997; font-size: 0.8rem; margin: 0;">Click to view models</p>
+                    </div>`;
+                });
+                brandDiv.innerHTML = html;
+            } else {
+                brandDiv.innerHTML = '<p style="text-align: center; color: #666;">No brands added yet</p>';
+            }
+        }
+        
+        function addBrand() {
+            const brandName = document.getElementById('brandName').value;
+            const brandImage = document.getElementById('brandImage').files[0];
+            
+            if (!brandName) {
+                alert('Please enter brand name');
+                return;
+            }
+            
+            if (!brandImage) {
+                alert('Please select brand image');
+                return;
+            }
+            
+            const key = `${window.currentGroup}_${window.currentCategory}`;
+            if (!window.categoryBrands[key]) {
+                window.categoryBrands[key] = [];
+            }
+            
+            const imageUrl = URL.createObjectURL(brandImage);
+            window.categoryBrands[key].push({
+                name: brandName,
+                image: imageUrl
+            });
+            
+            saveToStorage();
+            
+            // Save to database
+            saveToDatabase('brand', brandName, brandImage);
+            
+            loadBrands();
+            
+            document.getElementById('brandName').value = '';
+            document.getElementById('brandImage').value = '';
+            
+            alert('Brand added successfully!');
+            displayAllImages();
+        }
+        
+        function showModelScreen(brandName, brandImage) {
+            window.currentBrand = brandName || '';
+            window.currentBrandImage = brandImage || '';
+            
+            const letter = (window.currentGroup || '').replace('group', '') || 'Unknown';
+            document.getElementById('model-group-header').textContent = `Group ${letter}`;
+            document.getElementById('model-category-info').innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 1rem;"><img src="${window.currentCategoryImage || ''}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;" onerror="this.style.display='none'"><span style="color: #FFD700; font-size: 1.1rem;">${window.currentCategory || 'Unknown'}</span></div>`;
+            document.getElementById('model-brand-info').innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 1rem;"><img src="${brandImage || ''}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;" onerror="this.style.display='none'"><span style="color: #17a2b8; font-size: 1.1rem;">${brandName || 'Unknown'}</span></div>`;
+            
+            showScreen('model-screen');
+            loadModels();
+            displayAllImages();
+        }
+        
+        function displayAllImages() {
+            const categoryDiv = document.getElementById('all-category-images');
+            const mainCategoryDiv = document.getElementById('main-category-images');
+            
+            let categoryHtml = '';
+            
+            // Group categories by group name
+            const groupedCategories = {};
+            Object.keys(window.groupCategories).forEach(groupName => {
+                if (!groupedCategories[groupName]) {
+                    groupedCategories[groupName] = [];
+                }
+                window.groupCategories[groupName].forEach(category => {
+                    groupedCategories[groupName].push(category);
+                });
+            });
+            
+            // Display categories grouped by group name
+            Object.keys(groupedCategories).forEach(groupName => {
+                if (groupedCategories[groupName].length > 0) {
+                    categoryHtml += `<div style="margin-bottom: 2rem;">`;
+                    categoryHtml += `<h3 style="color: #FFD700; margin-bottom: 1rem; text-align: center; font-size: 1.2rem;">Group: ${groupName.toUpperCase()}</h3>`;
+                    categoryHtml += `<div style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem;">`;
+                    
+                    groupedCategories[groupName].forEach(category => {
+                        const categoryKey = `${groupName}_${category.name}`;
+                        const brandCount = window.categoryBrands[categoryKey] ? window.categoryBrands[categoryKey].length : 0;
+                        
+                        categoryHtml += `<div onclick="showCategoryBrands('${groupName}', '${category.name}')" style="flex: 0 0 120px; text-align: center; background: rgba(40,167,69,0.2); border-radius: 8px; padding: 1rem; border: 2px solid #28a745; cursor: pointer;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                            <img src="${category.image}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-bottom: 0.5rem;" onerror="this.style.display='none'">
+                            <div style="color: #28a745; font-size: 0.8rem; font-weight: bold;">${category.name}</div>
+                            <div style="color: #666; font-size: 0.7rem;">${brandCount} brands</div>
+                        </div>`;
+                    });
+                    
+                    categoryHtml += `</div></div>`;
+                }
+            });
+            
+            const finalHtml = categoryHtml || '<p style="color: #666; text-align: center;">No categories added yet</p>';
+            if (categoryDiv) categoryDiv.innerHTML = finalHtml;
+            if (mainCategoryDiv) mainCategoryDiv.innerHTML = finalHtml;
+        }
+        
+        function showCategoryBrands(groupName, categoryName) {
+            const categoryDiv = document.getElementById('all-category-images');
+            const mainCategoryDiv = document.getElementById('main-category-images');
+            
+            let brandHtml = `<div onclick="displayAllImages()" style="background: #6c757d; color: white; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-bottom: 1rem; text-align: center;">← Back to Categories</div>`;
+            
+            const categoryKey = `${groupName}_${categoryName}`;
+            if (window.categoryBrands[categoryKey]) {
+                window.categoryBrands[categoryKey].forEach(brand => {
+                    const brandKey = `${groupName}_${categoryName}_${brand.name}`;
+                    const modelCount = window.brandModels[brandKey] ? window.brandModels[brandKey].length : 0;
+                    
+                    brandHtml += `<div onclick="showBrandModels('${groupName}', '${categoryName}', '${brand.name}')" style="flex: 0 0 120px; text-align: center; background: rgba(23,162,184,0.2); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border: 2px solid #17a2b8; cursor: pointer;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <img src="${brand.image}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-bottom: 0.5rem;" onerror="this.style.display='none'">
+                        <div style="color: #17a2b8; font-size: 0.8rem; font-weight: bold;">${brand.name}</div>
+                        <div style="color: #666; font-size: 0.7rem;">${modelCount} models</div>
+                    </div>`;
+                });
+            } else {
+                brandHtml += '<p style="color: #666; text-align: center;">No brands added yet</p>';
+            }
+            
+            if (categoryDiv) categoryDiv.innerHTML = `<div style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem;">${brandHtml}</div>`;
+            if (mainCategoryDiv) mainCategoryDiv.innerHTML = `<div style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem;">${brandHtml}</div>`;
+        }
+        
+        function showBrandModels(groupName, categoryName, brandName) {
+            const categoryDiv = document.getElementById('all-category-images');
+            const mainCategoryDiv = document.getElementById('main-category-images');
+            
+            let modelHtml = `<div onclick="showCategoryBrands('${groupName}', '${categoryName}')" style="background: #6c757d; color: white; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-bottom: 1rem; text-align: center;">← Back to Brands</div>`;
+            
+            const brandKey = `${groupName}_${categoryName}_${brandName}`;
+            if (window.brandModels[brandKey]) {
+                window.brandModels[brandKey].forEach(model => {
+                    modelHtml += `<div style="flex: 0 0 120px; text-align: center; background: rgba(255,193,7,0.2); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border: 2px solid #ffc107;">
+                        <img src="${model.image}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-bottom: 0.5rem;" onerror="this.style.display='none'">
+                        <div style="color: #ffc107; font-size: 0.8rem; font-weight: bold;">${model.name}</div>
+                    </div>`;
+                });
+            } else {
+                modelHtml += '<p style="color: #666; text-align: center;">No models added yet</p>';
+            }
+            
+            if (categoryDiv) categoryDiv.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem;">${modelHtml}</div>`;
+            if (mainCategoryDiv) mainCategoryDiv.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem;">${modelHtml}</div>`;
+        }
+        
+        function loadModels() {
+            const modelDiv = document.getElementById('model-display');
+            const key = `${window.currentGroup}_${window.currentCategory}_${window.currentBrand}`;
+            const models = window.brandModels[key] || [];
+            
+            if (models.length > 0) {
+                let html = '';
+                models.forEach(model => {
+                    html += `<div style="text-align: center; background: rgba(255,193,7,0.2); border: 2px solid #ffc107; border-radius: 15px; padding: 1.5rem;">
+                        <img src="${model.image}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover; margin-bottom: 1rem;" onerror="this.style.display='none'">
+                        <h4 style="color: #ffc107; margin: 0;">${model.name}</h4>
+                    </div>`;
+                });
+                modelDiv.innerHTML = html;
+            } else {
+                modelDiv.innerHTML = '<p style="text-align: center; color: #666;">No models added yet</p>';
+            }
+        }
+        
+        function addModel() {
+            const modelName = document.getElementById('modelName').value;
+            const modelImage = document.getElementById('modelImage').files[0];
+            
+            if (!modelName) {
+                alert('Please enter model name');
+                return;
+            }
+            
+            if (!modelImage) {
+                alert('Please select model image');
+                return;
+            }
+            
+            const key = `${window.currentGroup}_${window.currentCategory}_${window.currentBrand}`;
+            if (!window.brandModels[key]) {
+                window.brandModels[key] = [];
+            }
+            
+            const imageUrl = URL.createObjectURL(modelImage);
+            window.brandModels[key].push({
+                name: modelName,
+                image: imageUrl
+            });
+            
+            saveToStorage();
+            
+            // Save to database
+            saveToDatabase('model', modelName, modelImage);
+            
+            loadModels();
+            
+            document.getElementById('modelName').value = '';
+            document.getElementById('modelImage').value = '';
+            
+            alert('Model added successfully!');
+            displayAllImages();
+        }
+        
+        function showBrandScreenFromMain(groupName, categoryName, categoryImage) {
+            window.currentGroup = groupName || '';
+            window.currentCategory = categoryName || '';
+            window.currentCategoryImage = categoryImage || '';
+            
+            const letter = (groupName || '').replace('group', '') || 'Unknown';
+            document.getElementById('brand-group-header').textContent = `Group ${letter}`;
+            document.getElementById('brand-category-info').innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 1rem;"><img src="${categoryImage || ''}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover;" onerror="this.style.display='none'"><h3 style="color: #FFD700; margin: 0;">${categoryName || 'Unknown'}</h3></div>`;
+            
+            showScreen('brand-screen');
+            loadBrands();
+        }
+        
+        function showUserListModal() {
+            document.getElementById('user-list-modal').style.display = 'block';
+            loadUsers();
+        }
+        
+        function closeUserList() {
+            document.getElementById('user-list-modal').style.display = 'none';
+        }
+        
+        function loadUsers() {
+            const container = document.getElementById('user-list-content');
+            container.innerHTML = '<p style="text-align: center; color: #F5F5DC; padding: 2rem;">Loading users...</p>';
+            
+            fetch('/api/get-all-users/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.users) {
+                        window.allUsers = data.users;
+                        displayUsers(window.allUsers);
+                    } else {
+                        container.innerHTML = '<p style="text-align: center; color: #F5F5DC; padding: 2rem;">No users found</p>';
+                    }
+                })
+                .catch(error => {
+                    container.innerHTML = '<p style="text-align: center; color: #dc3545; padding: 2rem;">Error loading users</p>';
+                });
+        }
+        
+        function displayUsers(users) {
+            const container = document.getElementById('user-list-content');
+            let html = '';
+            
+            if (users && users.length > 0) {
+                users.forEach(user => {
+                    const blockButtonText = user.blocked ? 'Unblock' : 'Block';
+                    const blockButtonColor = user.blocked ? '#28a745' : '#dc3545';
+                    const statusText = user.blocked ? 'BLOCKED' : 'ACTIVE';
+                    const statusColor = user.blocked ? '#dc3545' : '#28a745';
+                    
+                    html += `
+                        <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border-left: 4px solid #FFD700;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: center;">
+                                <div>
+                                    <p style="color: #FFD700; font-weight: bold; margin: 0;">Name: ${user.name || 'Not provided'}</p>
+                                    <p style="color: #F5F5DC; margin: 0.2rem 0;">Phone: ${user.phone}</p>
+                                </div>
+                                <div>
+                                    <p style="color: #F5F5DC; margin: 0;">Pincode: ${user.pincode || 'Not provided'}</p>
+                                    <p style="color: ${statusColor}; margin: 0.2rem 0; font-weight: bold;">Status: ${statusText}</p>
+                                </div>
+                                <div>
+                                    <button onclick="blockUser(${user.id})" style="background: ${blockButtonColor}; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-size: 0.9rem; margin-bottom: 0.5rem; width: 100%;">${blockButtonText}</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html = `
+                    <div style="text-align: center; padding: 3rem; color: #F5F5DC;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+                        <h3 style="color: #FFD700; margin-bottom: 1rem;">No Users Found</h3>
+                        <p>No users have registered yet. Users will appear here once they register through the app.</p>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function filterUsers() {
+            const searchTerm = document.getElementById('user-search').value.toLowerCase();
+            const filteredUsers = (window.allUsers || []).filter(user => 
+                (user.name && user.name.toLowerCase().includes(searchTerm)) ||
+                (user.phone && user.phone.includes(searchTerm)) ||
+                (user.pincode && user.pincode.includes(searchTerm)) ||
+                (user.unique_id && user.unique_id.toLowerCase().includes(searchTerm))
+            );
+            displayUsers(filteredUsers);
+        }
+        
+        function blockUser(userId) {
+            if (confirm('Are you sure you want to block/unblock this user?')) {
+                fetch(`/api/block-user/${userId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        loadUsers(); // Reload user list
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error blocking/unblocking user');
+                });
+            }
+        }
+        
+        function showProductListModal() {
+            document.getElementById('product-list-modal').style.display = 'block';
+            loadProducts();
+        }
+        
+        function closeProductList() {
+            document.getElementById('product-list-modal').style.display = 'none';
+        }
+        
+        function loadProducts() {
+            const container = document.getElementById('product-list-content');
+            container.innerHTML = '<p style="text-align: center; color: #F5F5DC; padding: 2rem;">Loading products...</p>';
+            
+            fetch('/get-all-admin-data/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.allProducts = data;
+                        displayProducts(data);
+                    } else {
+                        container.innerHTML = '<p style="text-align: center; color: #F5F5DC; padding: 2rem;">No products found</p>';
+                    }
+                })
+                .catch(error => {
+                    container.innerHTML = '<p style="text-align: center; color: #dc3545; padding: 2rem;">Error loading products</p>';
+                });
+        }
+        
+        function displayProducts(data) {
+            const container = document.getElementById('product-list-content');
+            let html = '';
+            let hasData = false;
+            
+            if (data.categories && Object.keys(data.categories).length > 0) {
+                hasData = true;
+                Object.keys(data.categories).forEach(groupName => {
+                    html += `<div style="background: rgba(102, 126, 234, 0.2); padding: 1.5rem; border-radius: 15px; margin-bottom: 2rem; border: 2px solid #667eea;">`;
+                    html += `<h2 style="color: #667eea; margin: 0 0 1.5rem 0; font-size: 1.5rem; text-align: center;">📁 Group: ${groupName.toUpperCase()}</h2>`;
+                    
+                    data.categories[groupName].forEach(category => {
+                        html += `<div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border-left: 4px solid #FFD700;">`;
+                        html += `<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">`;
+                        if (category.image) {
+                            html += `<img src="${category.image}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;" onerror="this.style.display='none'">`;
+                        }
+                        html += `<h3 style="color: #FFD700; margin: 0; font-size: 1.2rem;">📂 ${category.name}</h3>`;
+                        html += `</div>`;
+                        
+                        const categoryKey = `${groupName}_${category.name}`;
+                        if (data.brands && data.brands[categoryKey]) {
+                            data.brands[categoryKey].forEach(brand => {
+                                html += `<div style="margin-left: 2rem; margin-bottom: 1rem; padding: 1rem; background: rgba(40, 167, 69, 0.2); border-radius: 8px; border-left: 3px solid #28a745;">`;
+                                html += `<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">`;
+                                if (brand.image) {
+                                    html += `<img src="${brand.image}" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover;" onerror="this.style.display='none'">`;
+                                }
+                                html += `<h4 style="color: #28a745; margin: 0; font-size: 1rem;">🏷️ ${brand.name}</h4>`;
+                                html += `</div>`;
+                                
+                                const brandKey = `${groupName}_${category.name}_${brand.name}`;
+                                if (data.models && data.models[brandKey]) {
+                                    data.models[brandKey].forEach(model => {
+                                        html += `<div style="margin-left: 2rem; margin-bottom: 0.5rem; padding: 0.8rem; background: rgba(220, 53, 69, 0.2); border-radius: 5px; border-left: 2px solid #dc3545; display: flex; align-items: center; gap: 1rem;">`;
+                                        if (model.image) {
+                                            html += `<img src="${model.image}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;" onerror="this.style.display='none'">`;
+                                        }
+                                        html += `<p style="color: #dc3545; margin: 0; font-weight: 500;">🚗 ${model.name}</p>`;
+                                        html += `</div>`;
+                                    });
+                                }
+                                html += `</div>`;
+                            });
+                        }
+                        html += `</div>`;
+                    });
+                    html += `</div>`;
+                });
+            }
+            
+            if (!hasData) {
+                html = `
+                    <div style="text-align: center; padding: 3rem; color: #F5F5DC;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
+                        <h3 style="color: #FFD700; margin-bottom: 1rem;">No Products Found</h3>
+                        <p>No groups, categories, brands or models have been added yet.</p>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function filterProducts() {
+            const searchTerm = document.getElementById('product-search').value.toLowerCase();
+            if (!searchTerm) {
+                displayProducts(window.allProducts);
+                return;
+            }
+            
+            const filteredData = { categories: {}, brands: {}, models: {} };
+            
+            if (window.allProducts.categories) {
+                Object.keys(window.allProducts.categories).forEach(groupName => {
+                    const filteredCategories = window.allProducts.categories[groupName].filter(cat => 
+                        cat.name.toLowerCase().includes(searchTerm)
+                    );
+                    if (filteredCategories.length > 0) {
+                        filteredData.categories[groupName] = filteredCategories;
+                    }
+                });
+            }
+            
+            displayProducts(filteredData);
+        }
+        function showCreateSubAdminModal() {
+            document.getElementById('create-subadmin-modal').style.display = 'block';
+        }
+        
+        function closeCreateSubAdmin() {
+            document.getElementById('create-subadmin-modal').style.display = 'none';
+            document.getElementById('create-subadmin-form').reset();
+        }
+        
+        function showSubAdminListModal() {
+            document.getElementById('subadmin-list-modal').style.display = 'block';
+            loadSubAdmins();
+        }
+        
+        function closeSubAdminList() {
+            document.getElementById('subadmin-list-modal').style.display = 'none';
+        }
+        
+        function loadSubAdmins() {
+            const container = document.getElementById('subadmin-list-content');
+            container.innerHTML = '<p style="text-align: center; color: #F5F5DC; padding: 2rem;">Loading sub admins...</p>';
+            
+            // Mock data for demonstration
+            const mockSubAdmins = [
+                { id: 1, name: 'John Doe', phone: '9876543210', state: 'Maharashtra', role: 'state_admin', created: '2024-01-15' },
+                { id: 2, name: 'Jane Smith', phone: '8765432109', state: 'Karnataka', role: 'regional_admin', created: '2024-01-20' },
+                { id: 3, name: 'Mike Johnson', phone: '7654321098', state: 'Tamil Nadu', role: 'state_admin', created: '2024-02-01' }
+            ];
+            
+            window.allSubAdmins = mockSubAdmins;
+            displaySubAdmins(mockSubAdmins);
+        }
+        
+        function displaySubAdmins(subAdmins) {
+            const container = document.getElementById('subadmin-list-content');
+            let html = '';
+            
+            if (subAdmins && subAdmins.length > 0) {
+                subAdmins.forEach(admin => {
+                    html += `
+                        <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border-left: 4px solid #FFD700;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                                <div>
+                                    <p style="color: #FFD700; font-weight: bold; margin: 0;">Name: ${admin.name}</p>
+                                    <p style="color: #F5F5DC; margin: 0.2rem 0;">Phone: ${admin.phone}</p>
+                                </div>
+                                <div>
+                                    <p style="color: #F5F5DC; margin: 0;">State: ${admin.state}</p>
+                                    <p style="color: #F5F5DC; margin: 0.2rem 0;">Role: ${admin.role.replace('_', ' ').toUpperCase()}</p>
+                                </div>
+                                <div>
+                                    <p style="color: #F5F5DC; margin: 0;">Created: ${admin.created}</p>
+                                    <button onclick="deleteSubAdmin(${admin.id})" style="background: #dc3545; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 5px; cursor: pointer; font-size: 0.8rem; margin-top: 0.5rem;">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html = `
+                    <div style="text-align: center; padding: 3rem; color: #F5F5DC;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+                        <h3 style="color: #FFD700; margin-bottom: 1rem;">No Sub Admins Found</h3>
+                        <p>No sub admins have been created yet.</p>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function filterSubAdmins() {
+            const searchTerm = document.getElementById('subadmin-search').value.toLowerCase();
+            const filteredSubAdmins = (window.allSubAdmins || []).filter(admin => 
+                admin.name.toLowerCase().includes(searchTerm) ||
+                admin.phone.includes(searchTerm) ||
+                admin.state.toLowerCase().includes(searchTerm) ||
+                admin.role.toLowerCase().includes(searchTerm)
+            );
+            displaySubAdmins(filteredSubAdmins);
+        }
+        
+        function deleteSubAdmin(adminId) {
+            if (confirm('Are you sure you want to delete this sub admin?')) {
+                window.allSubAdmins = window.allSubAdmins.filter(admin => admin.id !== adminId);
+                displaySubAdmins(window.allSubAdmins);
+                alert('Sub admin deleted successfully!');
+            }
+        }
+        
+        // Handle create sub admin form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('create-subadmin-form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const name = document.getElementById('subadmin-name').value;
+                    const phone = document.getElementById('subadmin-phone').value;
+                    const state = document.getElementById('subadmin-state').value;
+                    const role = document.getElementById('subadmin-role').value;
+                    
+                    if (!name || !phone || !state || !role) {
+                        alert('Please fill all fields');
+                        return;
+                    }
+                    
+                    // Mock creation - in real app, send to server
+                    const newAdmin = {
+                        id: Date.now(),
+                        name: name,
+                        phone: phone,
+                        state: state,
+                        role: role,
+                        created: new Date().toISOString().split('T')[0]
+                    };
+                    
+                    if (!window.allSubAdmins) window.allSubAdmins = [];
+                    window.allSubAdmins.push(newAdmin);
+                    
+                    alert('Sub admin created successfully!');
+                    closeCreateSubAdmin();
+                });
+            }
+        });
+        
+        function saveToDatabase(type, name, imageFile) {
+            const formData = new FormData();
+            formData.append('type', type);
+            formData.append('name', name);
+            formData.append('image', imageFile);
+            formData.append('group_name', window.currentGroup || '');
+            formData.append('category_name', window.currentCategory || '');
+            formData.append('brand_name', window.currentBrand || '');
+            
+            fetch('/save-admin-data/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`${type} saved to database`);
+                } else {
+                    console.error(`Error saving ${type}:`, data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Database save error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

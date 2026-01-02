@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Check - GoWheels</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        body {
+            background-image: linear-gradient(rgba(44, 24, 16, 0.8), rgba(44, 24, 16, 0.8)), url('https://i.pinimg.com/1200x/94/58/33/9458333b50f48df21804133302bbd7b2.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+        .login-main {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 80px);
+            padding: 2rem;
+        }
+        .login-container {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            max-width: 450px;
+            width: 100%;
+        }
+        .login-card h2 {
+            font-family: 'Arial Black', Arial, sans-serif;
+            font-size: 2.2rem;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .login-card p {
+            color: #F5F5DC;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        .input-group label {
+            display: block;
+            color: #FFD700;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .input-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            font-size: 1.1rem;
+            backdrop-filter: blur(10px);
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 215, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar" style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(44, 24, 16, 0.95) 100%); backdrop-filter: blur(20px); border-bottom: 2px solid rgba(255, 215, 0, 0.3); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+            <div class="nav-brand" style="text-align: left;">
+                <h1 style="margin: 0; text-align: left; font-size: 2.2rem; font-family: 'Arial Black', Arial, sans-serif; color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"><span style="display: inline-block; animation: rotate 2s linear infinite; font-size: 2.5rem;">🛞</span>GoWheels</h1>
+            </div>
+            <ul class="nav-menu" style="font-family: 'Arial', sans-serif; font-weight: 600;">
+                <li><a href="/" style="color: #FFFFFF; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Home</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main class="login-main">
+        <div class="login-container">
+            <div class="login-card">
+                <h2>📱 Enter Your Phone Number</h2>
+                <p>We'll check if you're already registered</p>
+                
+                <form id="phone-check-form">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" placeholder="Enter your 10-digit phone number" required maxlength="10">
+                    </div>
+                    
+                    <button type="submit" class="btn-submit">Continue</button>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        document.getElementById('phone-check-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const phone = document.getElementById('phone').value;
+            
+            if (phone.length !== 10) {
+                alert('Please enter a valid 10-digit phone number');
+                return;
+            }
+            
+            // Send phone number to backend to check if registered
+            fetch('/check-phone/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ phone: phone })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                if (data.exists) {
+                    // Phone exists, redirect to login
+                    window.location.href = `/login/?phone=${phone}`;
+                } else {
+                    // New phone, redirect to registration
+                    window.location.href = `/register/?phone=${phone}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Something went wrong. Please try again.');
+            });
+        });
+    </script>
+</body>
+</html>
