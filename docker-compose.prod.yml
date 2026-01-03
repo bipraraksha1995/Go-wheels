@@ -25,10 +25,10 @@ services:
     container_name: gowheels_db
     restart: always
     environment:
-      MYSQL_DATABASE: gowheels
-      MYSQL_USER: gowheels_user
-      MYSQL_PASSWORD: gowheels_pass
-      MYSQL_ROOT_PASSWORD: root_pass
+      MYSQL_DATABASE: gowheels_new
+      MYSQL_USER: root
+      MYSQL_PASSWORD: sibi@100#
+      MYSQL_ROOT_PASSWORD: sibi@100#
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
