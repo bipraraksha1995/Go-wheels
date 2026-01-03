@@ -1,32 +1,43 @@
+version: "3.9"
+
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gowheels_web
+    env_file:
+      - .env
     ports:
-      - "80:8000"
-    volumes:
-      - ./media:/app/media
-    environment:
-      - DEBUG=False
-      - ALLOWED_HOSTS=*
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_NAME=gowheels_new
-      - DB_USER=root
-      - DB_PASSWORD=sibi@100#
+      - "8000:8000"
     depends_on:
-      - db
-    restart: unless-stopped
+      db:
+        condition: service_healthy
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    command: ["bash", "/app/entrypoint.sh"]
+    restart: always
+    # ... existing code ...
 
   db:
     image: mysql:8.0
+    container_name: gowheels_db
+    restart: always
     environment:
-      MYSQL_DATABASE: gowheels_new
-      MYSQL_USER: root
-      MYSQL_PASSWORD: sibi@100#
-      MYSQL_ROOT_PASSWORD: sibi@100#
+      MYSQL_DATABASE: gowheels
+      MYSQL_USER: gowheels_user
+      MYSQL_PASSWORD: gowheels_pass
+      MYSQL_ROOT_PASSWORD: root_pass
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     volumes:
       - mysql_data:/var/lib/mysql
-    restart: unless-stopped
 
 volumes:
   mysql_data:
+  static_volume:
+  media_volume:
