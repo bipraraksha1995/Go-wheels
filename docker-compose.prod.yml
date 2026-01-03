@@ -1,0 +1,32 @@
+services:
+  web:
+    build: .
+    ports:
+      - "80:8000"
+    volumes:
+      - ./media:/app/media
+    environment:
+      - DEBUG=False
+      - ALLOWED_HOSTS=*
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=gowheels_new
+      - DB_USER=root
+      - DB_PASSWORD=sibi@100#
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: gowheels_new
+      MYSQL_USER: root
+      MYSQL_PASSWORD: sibi@100#
+      MYSQL_ROOT_PASSWORD: sibi@100#
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
