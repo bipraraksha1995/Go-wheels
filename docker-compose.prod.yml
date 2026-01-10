@@ -25,7 +25,7 @@ services:
     container_name: gowheels_db
     restart: always
     environment:
-      MYSQL_DATABASE: gowheels_new
+      MYSQL_DATABASE: gowheels
       MYSQL_USER: root
       MYSQL_PASSWORD: sibi@100#
       MYSQL_ROOT_PASSWORD: sibi@100#

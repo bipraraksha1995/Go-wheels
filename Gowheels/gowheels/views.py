@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .models import Vehicle, UserProfile, BrandImage, ModelImage, VehicleImage
+from .models import Vehicle, UserProfile, BrandImage, ModelImage, VehicleImage, Pincode
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Count
@@ -553,6 +553,7 @@ def get_vehicles(request):
         brand_name = str(request.GET.get('br', '')) 
         model_name = str(request.GET.get('mod', ''))
         pincode = str(request.GET.get('pincode', ''))
+        radius_km = int(request.GET.get('radius', 10))  # Default 10km radius
         
         vehicles = Vehicle.objects.filter(available=True, approval_status='approved')
         
@@ -563,7 +564,23 @@ def get_vehicles(request):
         if model_name:
             vehicles = vehicles.filter(model_name__iexact=model_name)
         if pincode:
-            vehicles = vehicles.filter(pincode__exact=pincode)
+            # Distance-based search using Haversine formula
+            try:
+                nearby_pincodes = Pincode.get_nearby_pincodes(pincode, radius_km)
+                vehicles = vehicles.filter(pincode__in=nearby_pincodes)
+            except Exception:
+                # Fallback to simple numeric range if GPS data not available
+                try:
+                    base_pincode = int(pincode)
+                    range_size = 10
+                    min_pincode = base_pincode - range_size
+                    max_pincode = base_pincode + range_size
+                    vehicles = vehicles.filter(
+                        pincode__gte=str(min_pincode),
+                        pincode__lte=str(max_pincode)
+                    )
+                except (ValueError, TypeError):
+                    vehicles = vehicles.filter(pincode__exact=pincode)
         
         for vehicle in vehicles:
             try:

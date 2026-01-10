@@ -1,0 +1,330 @@
+# GoWheels Android API Documentation
+
+**Base URL:** `http://your-domain.com/`
+**Demo OTP:** `123456`
+
+## 1. USER AUTHENTICATION
+
+### Check Phone Number
+```
+POST /check-phone/
+Content-Type: application/json
+
+Request:
+{
+  "phone": "9876543210"
+}
+
+Response:
+{
+  "exists": true
+}
+```
+
+### Register User
+```
+POST /register/
+Content-Type: application/x-www-form-urlencoded
+
+Request:
+phone=9876543210&name=John Doe&pincode=123456
+
+Response:
+{
+  "success": true,
+  "message": "Registration successful"
+}
+```
+
+### Login User
+```
+POST /login/
+Content-Type: application/x-www-form-urlencoded
+
+Request:
+phone=9876543210&otp=123456
+
+Response:
+{
+  "success": true,
+  "message": "Login successful",
+  "unique_id": "user_123"
+}
+```
+
+## 2. VEHICLE SEARCH
+
+### Get All Vehicles
+```
+GET /get-vehicles/
+
+Response:
+{
+  "vehicles": [
+    {
+      "id": 1,
+      "category_name": "car",
+      "brand_name": "Honda",
+      "model_name": "City",
+      "year": 2020,
+      "price": "500",
+      "per_day_price": "500",
+      "per_hour_price": "50",
+      "pricing_type": "per-hour",
+      "seller_phone": "9876543210",
+      "pincode": "123456",
+      "village": "Sample Village",
+      "owner_name": "John Doe",
+      "images": ["/media/vehicle1.jpg", "/media/vehicle2.jpg"]
+    }
+  ]
+}
+```
+
+### Search by Category
+```
+GET /get-vehicles/?cat=car
+
+Response: Same as above, filtered by category
+```
+
+### Search by Brand
+```
+GET /get-vehicles/?br=Honda
+
+Response: Same as above, filtered by brand
+```
+
+### Search by Model
+```
+GET /get-vehicles/?mod=City
+
+Response: Same as above, filtered by model
+```
+
+### Search by Pincode
+```
+GET /get-vehicles/?pincode=123456
+
+Response: Same as above, filtered by pincode area
+```
+
+### Combined Search
+```
+GET /get-vehicles/?cat=car&br=Honda&mod=City&pincode=123456
+
+Response: Same as above, with all filters applied
+```
+
+## 3. CATEGORIES & DATA
+
+### Get All Categories, Brands, Models
+```
+GET /get-all-admin-data/
+
+Response:
+{
+  "success": true,
+  "categories": {
+    "Group1": [
+      {
+        "name": "Cars",
+        "image": "/media/car_category.jpg"
+      }
+    ]
+  },
+  "brands": {
+    "Group1_Cars": [
+      {
+        "name": "Honda",
+        "image": "/media/honda_logo.jpg"
+      }
+    ]
+  },
+  "models": {
+    "Group1_Cars_Honda": [
+      {
+        "name": "City",
+        "image": "/media/honda_city.jpg"
+      }
+    ]
+  }
+}
+```
+
+## 4. SELLER FUNCTIONS
+
+### Add Vehicle
+```
+POST /seller-dashboard-form/
+Content-Type: multipart/form-data
+
+Request:
+selected_category=car
+selected_brand=Honda
+selected_model=City
+year=2020
+hourly_price=50
+daily_price=500
+pincode=123456
+village=Sample Village
+owner_name=John Doe
+vehicle_images=file1.jpg,file2.jpg (up to 4 images)
+
+Response:
+{
+  "success": true,
+  "message": "Vehicle listed successfully"
+}
+```
+
+### Get Seller's Vehicles
+```
+GET /get-seller-vehicles/
+(Requires user session)
+
+Response:
+{
+  "vehicles": [
+    {
+      "id": 1,
+      "category_name": "car",
+      "brand_name": "Honda",
+      "model_name": "City",
+      "year": 2020,
+      "price": "500",
+      "available": true,
+      "approval_status": "approved",
+      "images": ["/media/vehicle1.jpg"]
+    }
+  ],
+  "total": 5,
+  "active": 3
+}
+```
+
+### Toggle Vehicle Status
+```
+POST /toggle-vehicle-status/1/
+(Requires user session)
+
+Response:
+{
+  "success": true,
+  "available": false
+}
+```
+
+### Delete Vehicle
+```
+POST /delete-vehicle/1/
+(Requires user session)
+
+Response:
+{
+  "success": true,
+  "message": "Vehicle deleted successfully"
+}
+```
+
+## 5. USER PROFILE
+
+### Get User Profile
+```
+GET /api/get-user-profile/
+(Requires user session)
+
+Response:
+{
+  "success": true,
+  "name": "John Doe",
+  "phone": "9876543210",
+  "pincode": "123456",
+  "unique_id": "user_123"
+}
+```
+
+### Update Profile
+```
+POST /update-profile/
+Content-Type: application/x-www-form-urlencoded
+(Requires user session)
+
+Request:
+name=John Smith&phone=9876543210&pincode=654321
+
+Response:
+{
+  "success": true,
+  "message": "Profile updated successfully"
+}
+```
+
+## 6. CONTACT SELLER
+
+### Track Vehicle Click
+```
+POST /track-vehicle-click/
+Content-Type: application/json
+
+Request:
+{
+  "seller_phone": "9876543210",
+  "buyer_phone": "9123456789",
+  "buyer_name": "Jane Doe"
+}
+
+Response:
+{
+  "success": true
+}
+```
+
+## ERROR RESPONSES
+
+All APIs return error responses in this format:
+```
+{
+  "success": false,
+  "error": "Error message here"
+}
+```
+
+## AUTHENTICATION
+
+- Use session-based authentication
+- Store session cookies after successful login
+- Include session cookies in subsequent API calls
+- Demo OTP for testing: `123456`
+
+## IMAGE HANDLING
+
+- Vehicle images are returned as relative URLs: `/media/filename.jpg`
+- Prepend base URL to get full image URL: `http://your-domain.com/media/filename.jpg`
+- Maximum 4 images per vehicle
+- Supported formats: JPG, PNG
+
+## NOTES 
+
+1. **Base URL**: Replace `your-domain.com` with actual server domain
+2. **OTP**: Use `123456` for demo/testing
+3. **Sessions**: Maintain session cookies for authenticated requests
+4. **Images**: Handle image loading with full URLs
+5. **Error Handling**: Always check `success` field in responses
+6. **Pincode Search**: Searches nearby areas automatically (±10 range)
+7. **Phone Format**: Use 10-digit Indian mobile numbers
+
+## TESTING ENDPOINTS
+
+You can test these APIs using:
+- Postman
+- curl commands
+- Browser for GET requests
+- Any HTTP client
+
+Example curl test:
+```bash
+curl -X POST http://your-domain.com/check-phone/ \
+  -H "Content-Type: application/json" \
+  -d '{"phone": "9876543210"}'
+```

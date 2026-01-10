@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Brands & Models</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c1810 100%);
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 2px solid #FFD700;
+        }
+        h1 { color: #FFD700; margin-bottom: 2rem; }
+        .category-info {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            border-left: 4px solid #FFD700;
+        }
+        .form-section {
+            background: rgba(255, 215, 0, 0.05);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        .form-section h3 {
+            color: #FFD700;
+            margin-bottom: 1rem;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .image-box {
+            width: 120px;
+            height: 120px;
+            border: 2px dashed #FFD700;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: rgba(255, 215, 0, 0.1);
+            position: relative;
+        }
+        .image-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .remove-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: #FFF;
+            padding: 1rem 3rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .btn-back {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            width: auto;
+            margin-right: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="btn btn-back" onclick="window.location.href='/super-admin-categories/'">← Back to Categories</button>
+        <button class="btn btn-back" onclick="window.location.href='/super-admin-panel/'" style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000;">🏠 Home</button>
+        
+        <h1>🛞 Add Subbrands & Models</h1>
+        
+        <div class="category-info">
+            <h3 id="category-display"></h3>
+        </div>
+
+        <form id="brand-model-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h3>📱 Subbrand Images (Multiple)</h3>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; color: #FFD700; margin-bottom: 0.5rem; font-weight: 600;">Subbrand Name</label>
+                    <input type="text" id="brand-name-input" placeholder="Enter subbrand name" style="width: 100%; padding: 0.8rem; border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 8px; background: rgba(0, 0, 0, 0.3); color: #FFF;" required>
+                </div>
+                <div class="image-grid" id="brand-grid"></div>
+                <input type="file" id="brand-files" name="brand_images" accept="image/*" multiple hidden>
+            </div>
+
+            <div class="form-section">
+                <h3>🚗 Model Images (Multiple)</h3>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; color: #FFD700; margin-bottom: 0.5rem; font-weight: 600;">Model Name</label>
+                    <input type="text" id="model-name-input" placeholder="Enter model name" style="width: 100%; padding: 0.8rem; border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 8px; background: rgba(0, 0, 0, 0.3); color: #FFF;" required>
+                </div>
+                <div class="image-grid" id="model-grid"></div>
+                <input type="file" id="model-files" name="model_images" accept="image/*" multiple hidden>
+            </div>
+
+            <button type="submit" class="btn">Submit Subbrands & Models</button>
+        </form>
+    </div>
+
+    <script>
+        const categoryType = sessionStorage.getItem('selected_category_type');
+        const categoryName = sessionStorage.getItem('selected_category_name');
+        const categoryId = sessionStorage.getItem('selected_category_id');
+
+        document.getElementById('category-display').textContent = `Category ${categoryType.toUpperCase()}: ${categoryName}`;
+
+        let brandFiles = [];
+        let modelFiles = [];
+
+        function setupImageUpload(gridId, fileInputId, filesArray) {
+            const grid = document.getElementById(gridId);
+            const fileInput = document.getElementById(fileInputId);
+            
+            const addBox = document.createElement('div');
+            addBox.className = 'image-box';
+            addBox.innerHTML = '<span style="font-size: 2rem; color: #FFD700;">+</span>';
+            addBox.onclick = () => fileInput.click();
+            grid.appendChild(addBox);
+            
+            fileInput.addEventListener('change', function() {
+                Array.from(this.files).forEach(file => {
+                    filesArray.push(file);
+                    
+                    const box = document.createElement('div');
+                    box.className = 'image-box';
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        const index = filesArray.indexOf(file);
+                        if (index > -1) filesArray.splice(index, 1);
+                        box.remove();
+                    };
+                    
+                    box.appendChild(img);
+                    box.appendChild(removeBtn);
+                    grid.insertBefore(box, grid.lastChild);
+                });
+                this.value = '';
+            });
+        }
+
+        setupImageUpload('brand-grid', 'brand-files', brandFiles);
+        setupImageUpload('model-grid', 'model-files', modelFiles);
+
+        document.getElementById('brand-model-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const brandName = document.getElementById('brand-name-input').value.trim();
+            const modelName = document.getElementById('model-name-input').value.trim();
+            
+            if (!brandName || !modelName) {
+                alert('Please enter both subbrand name and model name');
+                return;
+            }
+            
+            if (brandFiles.length === 0 && modelFiles.length === 0) {
+                alert('Please select at least one subbrand or model image');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('category_type', categoryType);
+            formData.append('category_name', categoryName);
+            formData.append('category_id', categoryId);
+            formData.append('brand_name', brandName);
+            formData.append('model_name', modelName);
+            
+            brandFiles.forEach(file => formData.append('brand_images', file));
+            modelFiles.forEach(file => formData.append('model_images', file));
+            
+            fetch('/api/add-brands-models/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Subbrands and models added successfully!');
+                    sessionStorage.clear();
+                    window.location.href = '/super-admin-categories/';
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                    console.error('Server error:', data);
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                alert('Error submitting subbrands and models: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>

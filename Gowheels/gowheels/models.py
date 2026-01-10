@@ -1,6 +1,43 @@
 from django.db import models
 from django.contrib.auth.models import User
-import uuid
+import math
+
+class Pincode(models.Model):
+    code = models.CharField(max_length=6, unique=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=50)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.code} - {self.city}, {self.state}"
+    
+    @staticmethod
+    def haversine_distance(lat1, lng1, lat2, lng2):
+        R = 6371
+        lat1, lng1, lat2, lng2 = map(math.radians, [lat1, lng1, lat2, lng2])
+        dlat = lat2 - lat1
+        dlng = lng2 - lng1
+        a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlng/2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        return R * c
+    
+    @classmethod
+    def get_nearby_pincodes(cls, pincode, radius_km=10):
+        try:
+            base = cls.objects.get(code=pincode)
+            nearby_pincodes = []
+            for pc in cls.objects.all():
+                distance = cls.haversine_distance(
+                    base.latitude, base.longitude,
+                    pc.latitude, pc.longitude
+                )
+                if distance <= radius_km:
+                    nearby_pincodes.append(pc.code)
+            return nearby_pincodes
+        except cls.DoesNotExist:
+            return [pincode]
 
 class AdminGroup(models.Model):
     name = models.CharField(max_length=50)
@@ -118,9 +155,9 @@ class Vehicle(models.Model):
     daily_end_range = models.DecimalField(max_digits=8, decimal_places=2, default=3000)
     per_day_price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     per_hour_price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
-    min_price = models.DecimalField(max_digits=8, decimal_places=2, default=100)  # Keep for backward compatibility
-    max_price = models.DecimalField(max_digits=8, decimal_places=2, default=3000)  # Keep for backward compatibility
-    price = models.DecimalField(max_digits=8, decimal_places=2)  # Keep for backward compatibility
+    min_price = models.DecimalField(max_digits=8, decimal_places=2, default=100)
+    max_price = models.DecimalField(max_digits=8, decimal_places=2, default=3000)
+    price = models.DecimalField(max_digits=8, decimal_places=2)
     pricing_type = models.CharField(max_length=20, choices=PRICING_TYPES)
     unit_type = models.CharField(max_length=20, choices=UNIT_TYPES, default='unit_price')
     category_image = models.ImageField(upload_to='vehicles/category/', blank=True)

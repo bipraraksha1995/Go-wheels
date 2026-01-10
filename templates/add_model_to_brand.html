@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Models to Brand - GoWheels</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c1810 100%);
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 2px solid #FFD700;
+        }
+        h1 { color: #FFD700; margin-bottom: 2rem; text-align: center; }
+        .selected-brand {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            border: 1px solid #FFD700;
+            text-align: center;
+        }
+        .brand-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+        }
+        .form-section {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            color: #FFD700;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #FFF;
+            font-size: 1rem;
+        }
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-upload input[type=file] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .file-upload-label {
+            display: block;
+            padding: 1rem;
+            border: 2px dashed rgba(255, 215, 0, 0.5);
+            border-radius: 10px;
+            text-align: center;
+            color: #FFD700;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: #FFF;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-right: 1rem;
+        }
+        .btn-back {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+        .success { 
+            color: #28a745; 
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            border-radius: 8px;
+            text-align: center;
+        }
+        .error { 
+            color: #dc3545; 
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏷️ Add Models to Brand</h1>
+        
+        <div class="selected-brand">
+            <h3 style="color: #FFD700; margin-bottom: 1rem;">Selected Brand</h3>
+            <div id="brand-display"></div>
+        </div>
+        
+        <div class="form-section">
+            <h2 style="color: #FFD700; margin-bottom: 1.5rem; text-align: center;">Add New Model</h2>
+            <form id="model-form">
+                <div class="form-group">
+                    <label>Model Name</label>
+                    <input type="text" name="model_name" placeholder="Enter model name" required>
+                </div>
+                <div class="form-group">
+                    <label>Model Images</label>
+                    <div class="file-upload">
+                        <input type="file" name="model_images" accept="image/*" multiple required>
+                        <label class="file-upload-label">
+                            📸 Click to upload model images (multiple allowed)
+                        </label>
+                    </div>
+                </div>
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button type="button" class="btn btn-back" onclick="goBack()">← Back to Brands</button>
+                <button type="button" class="btn" onclick="window.location.href='/super-admin-panel/'" style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000; margin-left: 1rem;">🏠 Home</button>
+                <button type="submit" class="btn">✨ Add Model</button>
+            </div>
+                <div id="message"></div>
+            </form>
+        </div>
+    </div>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const brandId = urlParams.get('brand_id');
+const categoryId = urlParams.get('category_id');
+
+function loadBrandInfo() {
+    if (brandId && categoryId) {
+        fetch(`/api/brands-for-category/${categoryId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const brand = data.brands.find(b => b.id == brandId);
+            if (brand) {
+                document.getElementById('brand-display').innerHTML = `
+                    <img src="${brand.image}" alt="${brand.name}" class="brand-image">
+                    <div style="color: #FFD700; font-weight: 600; font-size: 1.2rem;">${brand.name}</div>
+                `;
+            }
+        });
+    }
+}
+
+function goBack() {
+    window.location.href = '/super-admin-categories/';
+}
+
+document.getElementById('model-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    formData.append('brand_id', brandId);
+    formData.append('category_id', categoryId);
+    
+    fetch('/api/add-model-to-brand/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const messageDiv = document.getElementById('message');
+        if (data.success) {
+            messageDiv.innerHTML = '<div class="success">Model added successfully!</div>';
+            this.reset();
+        } else {
+            messageDiv.innerHTML = `<div class="error">${data.error}</div>`;
+        }
+    })
+    .catch(error => {
+        document.getElementById('message').innerHTML = '<div class="error">Error adding model</div>';
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+loadBrandInfo();
+</script>
+</body>
+</html>

@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Categories</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            color: #0F1111;
+            line-height: 1.4;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .user-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .action-btn {
+            background: none;
+            border: 1px solid #fff;
+            color: white;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .search-bar {
+            display: flex;
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .search-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+        }
+        .search-btn {
+            background: #FF9900;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .user-info {
+            background: #37475A;
+            padding: 8px 16px;
+            font-size: 12px;
+            display: flex;
+            gap: 16px;
+        }
+        .container {
+            max-width: 100%;
+            padding: 16px;
+        }
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+        .screen-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #DDD;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #0066C0;
+        }
+        .screen-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .item {
+            background: white;
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .item:active {
+            background: #F7F8F8;
+        }
+        .item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .item h3 {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0;
+        }
+        .item p {
+            font-size: 12px;
+            color: #565959;
+            margin: 4px 0 0 0;
+        }
+        .vehicle-card {
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: white;
+        }
+        .vehicle-header {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #0F1111;
+        }
+        .vehicle-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .vehicle-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #DDD;
+            cursor: pointer;
+        }
+        .vehicle-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+            color: #565959;
+            margin-bottom: 8px;
+        }
+        .contact-info {
+            color: #007600;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-call {
+            background: #007600;
+            color: white;
+        }
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .vehicle-images {
+                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            }
+            .vehicle-image {
+                width: 80px;
+                height: 80px;
+            }
+        }
+        @media (min-width: 1024px) {
+            .grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-top">
+            <div class="logo">GoWheels</div>
+            <div class="user-actions">
+                <button class="action-btn" onclick="showHistory()">History</button>
+                <button class="action-btn" onclick="window.location.href='/seller-vehicles/'">My Vehicles</button>
+                <button class="action-btn" onclick="window.location.href='/seller-dashboard/'">Add Vehicle</button>
+            </div>
+        </div>
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchPincode" placeholder="Search by pincode...">
+            <button class="search-btn" onclick="searchByPincode()">🔍</button>
+        </div>
+        <div class="user-info">
+            <span>Phone: <span id="userPhone">Loading...</span></span>
+            <span>Pincode: <span id="userPincode" onclick="changePincode()" style="cursor: pointer; text-decoration: underline;">Loading...</span></span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Groups Screen -->
+        <div id="groups-screen" class="screen active">
+            <div class="screen-header">
+                <button class="back-btn" onclick="window.location.href='/phone-check/'">‹</button>
+                <div class="screen-title">Select Category Group</div>
+            </div>
+            <div id="groups-grid" class="grid"></div>
+        </div>
+        
+        <!-- Categories Screen -->
+        <div id="categories-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="showGroups()">‹</button>
+                <div class="screen-title" id="categories-title">Categories</div>
+            </div>
+            <div id="categories-grid" class="grid"></div>
+        </div>
+        
+        <!-- Brands Screen -->
+        <div id="brands-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="showCategories()">‹</button>
+                <div class="screen-title" id="brands-title">Brands</div>
+            </div>
+            <div style="padding: 12px 0; border-bottom: 1px solid #DDD; margin-bottom: 16px;">
+                <input type="text" id="brand-pincode-search" placeholder="Enter pincode to search all brands" style="width: 100%; padding: 8px 12px; border: 1px solid #DDD; border-radius: 4px; font-size: 14px;" onkeypress="if(event.key==='Enter') searchAllBrandsByPincode()">
+                <button onclick="searchAllBrandsByPincode()" style="background: #FF9900; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 12px; width: 100%; margin-top: 8px; cursor: pointer;">Search All Brands</button>
+            </div>
+            <div id="brands-grid" class="grid"></div>
+        </div>
+        
+        <!-- Models Screen -->
+        <div id="models-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="showBrands()">‹</button>
+                <div class="screen-title" id="models-title">Models</div>
+            </div>
+            <div style="padding: 12px 0; border-bottom: 1px solid #DDD; margin-bottom: 16px;">
+                <input type="text" id="model-pincode-search" placeholder="Enter pincode to search all models" style="width: 100%; padding: 8px 12px; border: 1px solid #DDD; border-radius: 4px; font-size: 14px;" onkeypress="if(event.key==='Enter') searchAllModelsByPincode()">
+                <button onclick="searchAllModelsByPincode()" style="background: #FF9900; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 12px; width: 100%; margin-top: 8px; cursor: pointer;">Search All Models</button>
+            </div>
+            <div id="models-grid" class="grid"></div>
+        </div>
+        
+        <!-- Vehicles Screen -->
+        <div id="vehicles-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="showModels()">‹</button>
+                <div class="screen-title" id="vehicles-title">Vehicles</div>
+            </div>
+            <div id="vehicles-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentGroup = '';
+        let currentCategory = '';
+        let currentBrand = '';
+        let allData = {};
+
+        // Load user profile data
+        fetch('/api/get-user-profile/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('userPhone').textContent = data.phone || 'Not Available';
+                document.getElementById('userPincode').textContent = data.pincode || 'Not Available';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading user profile:', error);
+        });
+
+        // Load all data on page load
+        fetch('/get-all-admin-data/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allData = data;
+                if (data.categories && Object.keys(data.categories).length > 0) {
+                    loadGroups();
+                } else {
+                    document.getElementById('groups-grid').innerHTML = '<p style="color: #565959; text-align: center; padding: 32px;">No groups available</p>';
+                }
+            } else {
+                document.getElementById('groups-grid').innerHTML = '<p style="color: #565959; text-align: center; padding: 32px;">Error: ' + (data.error || 'Unknown error') + '</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Fetch Error:', error);
+            document.getElementById('groups-grid').innerHTML = '<p style="color: #565959; text-align: center; padding: 32px;">Failed to load data</p>';
+        });
+
+        function loadGroups() {
+            const grid = document.getElementById('groups-grid');
+            let html = '';
+            
+            if (allData.categories && Object.keys(allData.categories).length > 0) {
+                Object.keys(allData.categories).forEach((groupName, index) => {
+                    html += `<div class="item" onclick="selectGroupByIndex(${index})">`;
+                    html += `<h3>${groupName}</h3>`;
+                    html += `<p>${allData.categories[groupName].length} categories</p>`;
+                    html += '</div>';
+                });
+            }
+            
+            grid.innerHTML = html || '<p style="color: #565959; text-align: center; padding: 32px;">No groups available</p>';
+        }
+
+        function selectGroupByIndex(index) {
+            const groupName = Object.keys(allData.categories)[index];
+            selectGroup(groupName);
+        }
+
+        function selectGroup(groupName) {
+            currentGroup = groupName;
+            document.getElementById('categories-title').textContent = groupName + ' - Categories';
+            
+            const grid = document.getElementById('categories-grid');
+            let html = '';
+            
+            (allData.categories[groupName] || []).forEach((category, index) => {
+                html += '<div class="item" data-category="' + index + '">' +
+                    '<img src="' + category.image + '" onerror="this.style.display=\'none\'">' +
+                    '<h3>' + category.name + '</h3>' +
+                '</div>';
+            });
+            
+            grid.innerHTML = html || '<p style="color: #565959; text-align: center; padding: 32px;">No categories available</p>';
+            
+            // Add event listeners for category selection
+            document.querySelectorAll('[data-category]').forEach(item => {
+                item.addEventListener('click', function() {
+                    const categoryIndex = this.getAttribute('data-category');
+                    const categoryName = allData.categories[groupName][categoryIndex].name;
+                    selectCategory(categoryName);
+                });
+            });
+            
+            showScreen('categories-screen');
+        }
+
+        function selectCategory(categoryName) {
+            currentCategory = categoryName;
+            document.getElementById('brands-title').textContent = categoryName + ' - Brands';
+            
+            const grid = document.getElementById('brands-grid');
+            let html = '';
+            
+            const key = currentGroup + '_' + categoryName;
+            
+            (allData.brands[key] || []).forEach((brand, index) => {
+                html += '<div class="item" data-brand="' + index + '">' +
+                    '<img src="' + brand.image + '" onerror="this.style.display=\'none\'">' +
+                    '<h3>' + brand.name + '</h3>' +
+                '</div>';
+            });
+            
+            grid.innerHTML = html || '<p style="color: #565959; text-align: center; padding: 32px;">No brands available</p>';
+            
+            // Add event listeners for brand selection
+            document.querySelectorAll('[data-brand]').forEach(item => {
+                item.addEventListener('click', function() {
+                    const brandIndex = this.getAttribute('data-brand');
+                    const key = currentGroup + '_' + currentCategory;
+                    const brandName = allData.brands[key][brandIndex].name;
+                    selectBrand(brandName);
+                });
+            });
+            
+            showScreen('brands-screen');
+        }
+
+        function selectBrand(brandName) {
+            currentBrand = brandName;
+            document.getElementById('models-title').textContent = brandName + ' - Models';
+            
+            const grid = document.getElementById('models-grid');
+            let html = '';
+            
+            const key = currentGroup + '_' + currentCategory + '_' + brandName;
+            
+            (allData.models[key] || []).forEach((model, index) => {
+                html += '<div class="item" data-model="' + index + '">' +
+                    '<img src="' + model.image + '" onerror="this.style.display=\'none\'">' +
+                    '<h3>' + model.name + '</h3>' +
+                '</div>';
+            });
+            
+            grid.innerHTML = html || '<p style="color: #565959; text-align: center; padding: 32px;">No models available</p>';
+            
+            // Add event listeners for model selection
+            document.querySelectorAll('[data-model]').forEach(item => {
+                item.addEventListener('click', function() {
+                    const modelIndex = this.getAttribute('data-model');
+                    const key = currentGroup + '_' + currentCategory + '_' + currentBrand;
+                    const modelName = allData.models[key][modelIndex].name;
+                    selectModel(modelName);
+                });
+            });
+            
+            showScreen('models-screen');
+        }
+
+        function selectModel(modelName) {
+            currentModel = modelName;
+            document.getElementById('vehicles-title').textContent = modelName + ' - Available Vehicles';
+            
+            const grid = document.getElementById('vehicles-grid');
+            grid.innerHTML = '<p style="color: #565959; text-align: center; padding: 32px;">Loading vehicles...</p>';
+            
+            // Fetch seller vehicles that match the admin category-brand-model names
+            fetch('/get-vehicles/?cat=' + encodeURIComponent(currentCategory) + '&br=' + encodeURIComponent(currentBrand) + '&mod=' + encodeURIComponent(modelName))
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                
+                if (data.vehicles && data.vehicles.length > 0) {
+                    data.vehicles.forEach(vehicle => {
+                        // Store images for modal
+                        vehicleImagesData[vehicle.id] = vehicle.images || [];
+                        
+                        // Save to history when vehicle is displayed
+                        saveToHistory(vehicle);
+                        
+                        html += `<div class="vehicle-card">
+                            <div class="vehicle-header">${vehicle.brand_name} ${vehicle.model_name}</div>`;
+                        
+                        if (vehicle.images && vehicle.images.length > 0) {
+                            html += '<div class="vehicle-images">';
+                            vehicle.images.forEach(image => {
+                                html += `<img src="${image}" class="vehicle-image" onclick="showImageModal('${image}', '${vehicle.id}')" alt="Vehicle Image">`;
+                            });
+                            html += '</div>';
+                        }
+                        
+                        html += `<div class="vehicle-details">
+                                <div><strong>Year:</strong> ${vehicle.year}</div>
+                                <div><strong>Per Hour:</strong> ₹${vehicle.per_hour_price > 0 ? vehicle.per_hour_price : '0'}</div>
+                                <div><strong>Per Day:</strong> ₹${vehicle.per_day_price > 0 ? vehicle.per_day_price : '0'}</div>
+                                <div><strong>Pincode:</strong> ${vehicle.pincode || 'Not specified'}</div>
+                                <div><strong>Village:</strong> ${vehicle.village || 'Not specified'}</div>
+                                <div><strong>Owner:</strong> ${vehicle.owner_name || 'Not available'}</div>
+                            </div>
+                            <div class="contact-info">
+                                <span id="phone-${vehicle.id}" style="display: none;">Contact: ${vehicle.seller_phone || 'Not available'}</span>
+                                <button id="show-phone-${vehicle.id}" onclick="showPhone('${vehicle.id}', '${vehicle.seller_phone}')" style="background: #007600; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Click to see phone</button>
+                            </div>
+                            <div class="action-buttons">
+                                <span onclick="callSeller('${vehicle.seller_phone}')" style="cursor: pointer; font-size: 24px;">📞</span>
+                                <span onclick="whatsappSeller('${vehicle.seller_phone}', '${vehicle.brand_name} ${vehicle.model_name}')" style="cursor: pointer; font-size: 24px;">💬</span>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    html = '<p style="color: #565959; text-align: center; padding: 32px;">No vehicles available for this model.</p>';
+                }
+                
+                grid.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error fetching vehicles:', error);
+                grid.innerHTML = '<p style="color: #565959; text-align: center; padding: 32px;">Error loading vehicles</p>';
+            });
+            
+            showScreen('vehicles-screen');
+        }
+
+        function saveToHistory(vehicle) {
+            let history = JSON.parse(localStorage.getItem('vehicleHistory') || '[]');
+            
+            // Remove if already exists to avoid duplicates
+            history = history.filter(v => v.id !== vehicle.id);
+            
+            // Add to beginning of array
+            history.unshift({
+                id: vehicle.id,
+                brand_name: vehicle.brand_name,
+                model_name: vehicle.model_name,
+                year: vehicle.year,
+                seller_phone: vehicle.seller_phone,
+                images: vehicle.images,
+                per_hour_price: vehicle.per_hour_price,
+                per_day_price: vehicle.per_day_price,
+                pincode: vehicle.pincode,
+                village: vehicle.village,
+                owner_name: vehicle.owner_name,
+                viewed_at: new Date().toISOString()
+            });
+            
+            // Keep only last 20 vehicles
+            history = history.slice(0, 20);
+            
+            localStorage.setItem('vehicleHistory', JSON.stringify(history));
+        }
+
+        function showHistory() {
+            const history = JSON.parse(localStorage.getItem('vehicleHistory') || '[]');
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+            
+            let historyHtml = '';
+            if (history.length > 0) {
+                history.forEach(vehicle => {
+                    const viewedDate = new Date(vehicle.viewed_at).toLocaleDateString();
+                    historyHtml += `
+                        <div style="border: 1px solid #DDD; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: white;">
+                            <div style="display: flex; gap: 12px;">
+                                <img src="${vehicle.images[0] || ''}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'">
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0 0 4px 0; color: #0F1111;">${vehicle.brand_name} ${vehicle.model_name}</h4>
+                                    <p style="margin: 0; font-size: 12px; color: #565959;">Year: ${vehicle.year} | Viewed: ${viewedDate}</p>
+                                    <p style="margin: 4px 0 0 0; font-size: 12px; color: #565959;">₹${vehicle.per_hour_price}/hr | ₹${vehicle.per_day_price}/day</p>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <button onclick="callSeller('${vehicle.seller_phone}')" style="background: #007600; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;">📞 Call</button>
+                                    <button onclick="whatsappSeller('${vehicle.seller_phone}', '${vehicle.brand_name} ${vehicle.model_name}')" style="background: #25D366; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;">💬 WhatsApp</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                historyHtml = '<p style="text-align: center; color: #666; padding: 20px;">No vehicles viewed yet</p>';
+            }
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 8px; padding: 20px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="margin: 0; color: #0F1111;">Vehicle History</h3>
+                        <button onclick="closeModal(this)" style="background: #D00; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">&times;</button>
+                    </div>
+                    <div>${historyHtml}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function showPhone(vehicleId, phone) {
+            document.getElementById('phone-' + vehicleId).style.display = 'block';
+            document.getElementById('show-phone-' + vehicleId).style.display = 'none';
+        }
+
+        function callSeller(phone) {
+            if (phone && phone !== 'Not available') {
+                window.location.href = 'tel:' + phone;
+            } else {
+                alert('Seller phone number not available');
+            }
+        }
+
+        function whatsappSeller(phone, vehicleName) {
+            if (phone && phone !== 'Not available') {
+                const message = 'Hi, I am interested in your ' + vehicleName + '. Is it still available?';
+                const whatsappUrl = 'https://wa.me/' + phone.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(message);
+                window.open(whatsappUrl, '_blank');
+            } else {
+                alert('Seller phone number not available');
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showGroups() {
+            showScreen('groups-screen');
+        }
+
+        function showCategories() {
+            showScreen('categories-screen');
+        }
+
+        function showBrands() {
+            showScreen('brands-screen');
+        }
+
+        function showModels() {
+            showScreen('models-screen');
+        }
+
+        function showUserProfile() {
+            fetch('/api/get-user-profile/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modal = document.createElement('div');
+                    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+                    modal.innerHTML = '<div style="background: white; border-radius: 8px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"><div style="text-align: center; margin-bottom: 20px;"><div style="width: 60px; height: 60px; background: #232F3E; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; color: white; font-size: 24px; font-weight: bold;">' + (data.name ? data.name.charAt(0).toUpperCase() : 'U') + '</div><h3 style="color: #0F1111; margin: 0;">User Profile</h3></div><div style="display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; justify-content: space-between; padding: 12px; background: #F7F8F8; border-radius: 4px;"><span style="font-weight: 500; color: #565959;">Name:</span><span style="color: #0F1111;">' + (data.name || 'Not Available') + '</span></div><div style="display: flex; justify-content: space-between; padding: 12px; background: #F7F8F8; border-radius: 4px;"><span style="font-weight: 500; color: #565959;">Phone:</span><span style="color: #0F1111;">' + (data.phone || 'Not Available') + '</span></div><div style="display: flex; justify-content: space-between; padding: 12px; background: #F7F8F8; border-radius: 4px;"><span style="font-weight: 500; color: #565959;">Pincode:</span><span style="color: #0F1111;">' + (data.pincode || 'Not Available') + '</span></div><div style="display: flex; justify-content: space-between; padding: 12px; background: #F7F8F8; border-radius: 4px;"><span style="font-weight: 500; color: #565959;">ID:</span><span style="color: #0F1111;">' + (data.unique_id || 'Not Available') + '</span></div></div><div style="text-align: center; margin-top: 20px;"><button onclick="closeModal(this)" style="background: #FF9900; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">Close</button></div></div>';
+                    document.body.appendChild(modal);
+                } else {
+                    alert('Error loading profile: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error loading profile');
+            });
+        }
+
+        function showSellerProfile() {
+            fetch('/get-seller-vehicles/')
+            .then(response => response.json())
+            .then(data => {
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+                
+                let vehiclesHtml = '';
+                if (data.vehicles && data.vehicles.length > 0) {
+                    data.vehicles.forEach(vehicle => {
+                        const statusColor = vehicle.available ? '#007600' : '#D00';
+                        const statusText = vehicle.available ? 'Active' : 'Inactive';
+                        
+                        vehiclesHtml += '<div style="border: 1px solid #DDD; border-radius: 4px; padding: 12px; margin-bottom: 8px; background: #F7F8F8;">' +
+                            '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                                '<div>' +
+                                    '<h4 style="margin: 0 0 4px 0; color: #0F1111; font-size: 14px;">' + vehicle.category_name + ' - ' + vehicle.brand_name + ' ' + vehicle.model_name + '</h4>' +
+                                    '<p style="margin: 0; color: #565959; font-size: 12px;">Year: ' + vehicle.year + ' | Price: ₹' + vehicle.price + '</p>' +
+                                '</div>' +
+                                '<div style="text-align: center;">' +
+                                    '<div style="color: ' + statusColor + '; font-weight: bold; font-size: 12px;">' + statusText + '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
+                    });
+                } else {
+                    vehiclesHtml = '<p style="text-align: center; color: #565959; padding: 20px;">No vehicles added yet</p>';
+                }
+                
+                modal.innerHTML = '<div style="background: white; border-radius: 8px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' +
+                    '<div style="text-align: center; margin-bottom: 20px;">' +
+                        '<div style="width: 60px; height: 60px; background: #232F3E; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; color: white; font-size: 24px;">🚗</div>' +
+                        '<h3 style="color: #0F1111; margin: 0;">Seller Profile</h3>' +
+                    '</div>' +
+                    '<div style="margin-bottom: 20px;">' +
+                        '<h4 style="color: #0F1111; margin-bottom: 12px; font-size: 16px;">Statistics</h4>' +
+                        '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">' +
+                            '<div style="background: #E8F5E8; padding: 12px; border-radius: 4px; text-align: center;">' +
+                                '<div style="font-size: 20px; font-weight: bold; color: #007600;">' + (data.total || 0) + '</div>' +
+                                '<div style="color: #565959; font-size: 12px;">Total Vehicles</div>' +
+                            '</div>' +
+                            '<div style="background: #E3F2FD; padding: 12px; border-radius: 4px; text-align: center;">' +
+                                '<div style="font-size: 20px; font-weight: bold; color: #0066C0;">' + (data.active || 0) + '</div>' +
+                                '<div style="color: #565959; font-size: 12px;">Active Vehicles</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div>' +
+                        '<h4 style="color: #0F1111; margin-bottom: 12px; font-size: 16px;">My Vehicles</h4>' +
+                        '<div style="max-height: 250px; overflow-y: auto;">' + vehiclesHtml + '</div>' +
+                    '</div>' +
+                    '<div style="text-align: center; margin-top: 20px; display: flex; gap: 12px; justify-content: center;">' +
+                        '<button onclick="closeModal(this)" style="background: #D00; color: white; padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">Close</button>' +
+                        '<button onclick="window.location.href=\'/seller-dashboard/\'" style="background: #007600; color: white; padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">Add Vehicle</button>' +
+                    '</div>' +
+                '</div>';
+                
+                document.body.appendChild(modal);
+            })
+            .catch(error => {
+                console.error('Error loading seller profile:', error);
+                alert('Error loading seller profile. Please make sure you are logged in.');
+            });
+        }
+
+        function changePincode() {
+            const newPincode = prompt('Enter new pincode:', document.getElementById('userPincode').textContent);
+            if (newPincode && newPincode.trim()) {
+                fetch('/update-profile/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: 'pincode=' + encodeURIComponent(newPincode.trim())
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('userPincode').textContent = newPincode.trim();
+                        alert('Pincode updated successfully!');
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error updating pincode');
+                });
+            }
+        }
+
+        function searchByPincode() {
+            const searchPincode = document.getElementById('searchPincode').value.trim();
+            if (searchPincode) {
+                fetch('/get-vehicles/?pincode=' + searchPincode.trim())
+                .then(response => response.json())
+                .then(data => {
+                    if (data.vehicles && data.vehicles.length > 0) {
+                        showVehiclesFromSearch(data.vehicles, searchPincode);
+                    } else {
+                        alert('No vehicles found in pincode ' + searchPincode);
+                    }
+                })
+                .catch(error => {
+                    alert('Error searching vehicles');
+                });
+            }
+        }
+        
+        function showVehiclesFromSearch(vehicles, pincode) {
+            showScreen('vehicles-screen');
+            document.getElementById('vehicles-title').textContent = 'Vehicles in Pincode ' + pincode;
+            
+            const grid = document.getElementById('vehicles-grid');
+            let html = '';
+            
+            vehicles.forEach(vehicle => {
+                // Store images for modal
+                vehicleImagesData[vehicle.id] = vehicle.images || [];
+                
+                // Save to history when vehicle is displayed
+                saveToHistory(vehicle);
+                
+                html += `<div class="vehicle-card">
+                    <div class="vehicle-header">${vehicle.brand_name} ${vehicle.model_name}</div>`;
+                
+                if (vehicle.images && vehicle.images.length > 0) {
+                    html += '<div class="vehicle-images">';
+                    vehicle.images.forEach(image => {
+                        html += `<img src="${image}" class="vehicle-image" onclick="showImageModal('${image}', '${vehicle.id}')" alt="Vehicle Image">`;
+                    });
+                    html += '</div>';
+                }
+                
+                html += `<div class="vehicle-details">
+                        <div><strong>Year:</strong> ${vehicle.year}</div>
+                        <div><strong>Per Hour:</strong> ₹${vehicle.per_hour_price > 0 ? vehicle.per_hour_price : '0'}</div>
+                        <div><strong>Per Day:</strong> ₹${vehicle.per_day_price > 0 ? vehicle.per_day_price : '0'}</div>
+                        <div><strong>Pincode:</strong> ${vehicle.pincode || 'Not specified'}</div>
+                        <div><strong>Village:</strong> ${vehicle.village || 'Not specified'}</div>
+                        <div><strong>Owner:</strong> ${vehicle.owner_name || 'Not available'}</div>
+                    </div>
+                    <div class="contact-info">
+                        <span id="phone-${vehicle.id}" style="display: none;">Contact: ${vehicle.seller_phone || 'Not available'}</span>
+                        <button id="show-phone-${vehicle.id}" onclick="showPhone('${vehicle.id}', '${vehicle.seller_phone}')" style="background: #007600; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Click to see phone</button>
+                    </div>
+                    <div class="action-buttons">
+                        <span onclick="callSeller('${vehicle.seller_phone}')" style="cursor: pointer; font-size: 24px;">📞</span>
+                        <span onclick="whatsappSeller('${vehicle.seller_phone}', '${vehicle.brand_name} ${vehicle.model_name}')" style="cursor: pointer; font-size: 24px;">💬</span>
+                    </div>
+                </div>`;
+            });
+            
+            grid.innerHTML = html;
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function closeModal(button) {
+            const modal = button.closest('[style*="position: fixed"]');
+            if (modal && modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }
+        
+        let vehicleImagesData = {};
+
+        function showImageModal(imageSrc, vehicleId) {
+            const vehicleImages = vehicleImagesData[vehicleId] || [];
+            if (vehicleImages.length === 0) return;
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 2000;';
+            
+            let currentIndex = vehicleImages.indexOf(imageSrc);
+            if (currentIndex === -1) currentIndex = 0;
+            
+            modal.innerHTML = `
+                <div style="position: relative; max-width: 90%; max-height: 90%; display: flex; align-items: center;">
+                    <button onclick="prevImage()" style="position: absolute; left: -50px; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; z-index: 10;">‹</button>
+                    <img id="modal-image" src="${imageSrc}" style="max-width: 100%; max-height: 100%; border-radius: 8px;">
+                    <button onclick="nextImage()" style="position: absolute; right: -50px; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; z-index: 10;">›</button>
+                    <button onclick="closeImageModal()" style="position: absolute; top: -10px; right: -10px; background: #D00; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px;">&times;</button>
+                    <div style="position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); color: white; font-size: 14px;">${currentIndex + 1} / ${vehicleImages.length}</div>
+                </div>
+            `;
+            
+            window.currentImageIndex = currentIndex;
+            window.modalImages = vehicleImages;
+            
+            document.body.appendChild(modal);
+            
+            window.prevImage = function() {
+                window.currentImageIndex = (window.currentImageIndex - 1 + window.modalImages.length) % window.modalImages.length;
+                const modalImage = document.getElementById('modal-image');
+                if (modalImage) {
+                    modalImage.src = window.modalImages[window.currentImageIndex];
+                    modal.querySelector('div[style*="bottom: -30px"]').textContent = `${window.currentImageIndex + 1} / ${window.modalImages.length}`;
+                }
+            };
+            
+            window.nextImage = function() {
+                window.currentImageIndex = (window.currentImageIndex + 1) % window.modalImages.length;
+                const modalImage = document.getElementById('modal-image');
+                if (modalImage) {
+                    modalImage.src = window.modalImages[window.currentImageIndex];
+                    modal.querySelector('div[style*="bottom: -30px"]').textContent = `${window.currentImageIndex + 1} / ${window.modalImages.length}`;
+                }
+            };
+        }
+
+        function closeImageModal() {
+            const modal = document.querySelector('[style*="position: fixed"][style*="z-index: 2000"]');
+            if (modal) modal.remove();
+        }
+        
+        function searchAllBrandsByPincode() {
+            const pincode = document.getElementById('brand-pincode-search').value.trim();
+            if (pincode) {
+                fetch('/get-vehicles/?cat=' + encodeURIComponent(currentCategory) + '&pincode=' + encodeURIComponent(pincode))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.vehicles && data.vehicles.length > 0) {
+                        showVehiclesFromSearch(data.vehicles, pincode + ' - ' + currentCategory + ' Vehicles');
+                    } else {
+                        alert('No ' + currentCategory + ' vehicles found in pincode ' + pincode);
+                    }
+                })
+                .catch(error => {
+                    alert('Error searching vehicles');
+                });
+            } else {
+                alert('Please enter a pincode');
+            }
+        }
+        
+        function searchAllModelsByPincode() {
+            const pincode = document.getElementById('model-pincode-search').value.trim();
+            if (pincode) {
+                fetch('/get-vehicles/?cat=' + encodeURIComponent(currentCategory) + '&br=' + encodeURIComponent(currentBrand) + '&pincode=' + encodeURIComponent(pincode))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.vehicles && data.vehicles.length > 0) {
+                        showVehiclesFromSearch(data.vehicles, pincode + ' - ' + currentBrand + ' Vehicles');
+                    } else {
+                        alert('No ' + currentBrand + ' vehicles found in pincode ' + pincode);
+                    }
+                })
+                .catch(error => {
+                    alert('Error searching vehicles');
+                });
+            } else {
+                alert('Please enter a pincode');
+            }
+        }
+        
+        function getUnitTypeDisplay(unitType) {
+            switch(unitType) {
+                case 'unit_price': return 'Unit Price';
+                case 'square_feet': return 'Square Feet';
+                case 'cubic_feet': return 'Cubic Feet';
+                default: return 'Unit Price';
+            }
+        }
+    </script>
+</body>
+</html>

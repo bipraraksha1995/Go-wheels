@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seller Vehicle Upload</title>
+    <style>
+        .form-container { max-width: 800px; margin: 20px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; }
+        .image-preview, .video-preview { display: flex; gap: 10px; margin-top: 10px; }
+        .preview-item { width: 100px; height: 100px; border: 1px solid #ddd; }
+        .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
+        .upload-section { border: 2px dashed #ddd; padding: 20px; text-align: center; margin: 10px 0; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .error { color: red; font-size: 12px; }
+        .success { color: green; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Add Your Vehicle</h2>
+        
+        <form id="vehicleForm" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Category Selection -->
+            <div class="form-group">
+                <label>Select Category:</label>
+                <select name="selected_category" id="categorySelect" required>
+                    <option value="">Choose Category</option>
+                    <option value="car">Car</option>
+                    <option value="bike">Bike</option>
+                    <option value="truck">Truck</option>
+                </select>
+            </div>
+            
+            <!-- Brand Selection -->
+            <div class="form-group">
+                <label>Select Brand:</label>
+                <select name="selected_brand" id="brandSelect" required disabled>
+                    <option value="">First select category</option>
+                </select>
+            </div>
+            
+            <!-- Model Selection -->
+            <div class="form-group">
+                <label>Select Model:</label>
+                <select name="selected_model" id="modelSelect" required disabled>
+                    <option value="">First select brand</option>
+                </select>
+            </div>
+            
+            <!-- Vehicle Details -->
+            <div class="form-group">
+                <label>Year:</label>
+                <input type="number" name="year" min="1990" max="2025" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Hourly Price (₹):</label>
+                <input type="number" name="hourly_price" min="1" step="0.01">
+            </div>
+            
+            <div class="form-group">
+                <label>Daily Price (₹):</label>
+                <input type="number" name="daily_price" min="1" step="0.01">
+            </div>
+            
+            <!-- Owner Details -->
+            <div class="form-group">
+                <label>Owner Name:</label>
+                <input type="text" name="owner_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Pincode:</label>
+                <input type="text" name="pincode" pattern="[0-9]{6}" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Village/Area:</label>
+                <input type="text" name="village" required>
+            </div>
+            
+            <!-- Image Upload (4 max) -->
+            <div class="form-group">
+                <label>Vehicle Images (Maximum 4):</label>
+                <div class="upload-section">
+                    <input type="file" name="vehicle_images" id="imageInput" multiple accept="image/*" required>
+                    <p>Click to select up to 4 images</p>
+                    <div class="error" id="imageError"></div>
+                </div>
+                <div class="image-preview" id="imagePreview"></div>
+            </div>
+            
+            <!-- Video Upload (1 max, 30 seconds) -->
+            <div class="form-group">
+                <label>Vehicle Video (Optional - Max 30 seconds):</label>
+                <div class="upload-section">
+                    <input type="file" name="vehicle_video" id="videoInput" accept="video/*">
+                    <p>Select 1 video (30 seconds max, 50MB limit)</p>
+                    <div class="error" id="videoError"></div>
+                </div>
+                <div class="video-preview" id="videoPreview"></div>
+            </div>
+            
+            <button type="submit" class="btn">List Vehicle</button>
+            <div id="submitMessage"></div>
+        </form>
+    </div>
+
+    <script>
+        // Sample data - replace with actual API calls
+        const categoryData = {
+            car: {
+                brands: ['Honda', 'Toyota', 'Maruti', 'Hyundai'],
+                models: {
+                    'Honda': ['Civic', 'City', 'Accord'],
+                    'Toyota': ['Camry', 'Corolla', 'Innova'],
+                    'Maruti': ['Swift', 'Alto', 'Baleno'],
+                    'Hyundai': ['i20', 'Creta', 'Verna']
+                }
+            },
+            bike: {
+                brands: ['Yamaha', 'Honda', 'Bajaj', 'TVS'],
+                models: {
+                    'Yamaha': ['R15', 'FZ', 'MT-15'],
+                    'Honda': ['CBR', 'Shine', 'Unicorn'],
+                    'Bajaj': ['Pulsar', 'Avenger', 'Dominar'],
+                    'TVS': ['Apache', 'Jupiter', 'Ntorq']
+                }
+            },
+            truck: {
+                brands: ['Tata', 'Ashok Leyland', 'Mahindra'],
+                models: {
+                    'Tata': ['Ace', 'Ultra', 'Prima'],
+                    'Ashok Leyland': ['Dost', 'Partner', 'Boss'],
+                    'Mahindra': ['Bolero Pickup', 'Jeeto', 'Supro']
+                }
+            }
+        };
+
+        // Category change handler
+        document.getElementById('categorySelect').addEventListener('change', function() {
+            const category = this.value;
+            const brandSelect = document.getElementById('brandSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            
+            // Reset brand and model
+            brandSelect.innerHTML = '<option value="">Choose Brand</option>';
+            modelSelect.innerHTML = '<option value="">First select brand</option>';
+            modelSelect.disabled = true;
+            
+            if (category && categoryData[category]) {
+                brandSelect.disabled = false;
+                categoryData[category].brands.forEach(brand => {
+                    brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
+                });
+            } else {
+                brandSelect.disabled = true;
+            }
+        });
+
+        // Brand change handler
+        document.getElementById('brandSelect').addEventListener('change', function() {
+            const category = document.getElementById('categorySelect').value;
+            const brand = this.value;
+            const modelSelect = document.getElementById('modelSelect');
+            
+            modelSelect.innerHTML = '<option value="">Choose Model</option>';
+            
+            if (brand && categoryData[category] && categoryData[category].models[brand]) {
+                modelSelect.disabled = false;
+                categoryData[category].models[brand].forEach(model => {
+                    modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
+                });
+            } else {
+                modelSelect.disabled = true;
+            }
+        });
+
+        // Image upload validation
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const errorDiv = document.getElementById('imageError');
+            const previewDiv = document.getElementById('imagePreview');
+            
+            errorDiv.textContent = '';
+            previewDiv.innerHTML = '';
+            
+            if (files.length > 4) {
+                errorDiv.textContent = 'Maximum 4 images allowed!';
+                e.target.value = '';
+                return;
+            }
+            
+            // Show image previews
+            Array.from(files).forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        const div = document.createElement('div');
+                        div.className = 'preview-item';
+                        div.appendChild(img);
+                        previewDiv.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+
+        // Video upload validation
+        document.getElementById('videoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const errorDiv = document.getElementById('videoError');
+            const previewDiv = document.getElementById('videoPreview');
+            
+            errorDiv.textContent = '';
+            previewDiv.innerHTML = '';
+            
+            if (file) {
+                // Check file size (50MB max)
+                if (file.size > 50 * 1024 * 1024) {
+                    errorDiv.textContent = 'Video file too large! Maximum 50MB (30 seconds) allowed.';
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Check file type
+                if (!file.type.startsWith('video/')) {
+                    errorDiv.textContent = 'Please select a valid video file.';
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Show video preview
+                const video = document.createElement('video');
+                video.src = URL.createObjectURL(file);
+                video.controls = true;
+                video.style.width = '200px';
+                video.style.height = '150px';
+                
+                // Check duration when metadata loads
+                video.addEventListener('loadedmetadata', function() {
+                    if (video.duration > 30) {
+                        errorDiv.textContent = 'Video duration must be 30 seconds or less!';
+                        e.target.value = '';
+                        previewDiv.innerHTML = '';
+                    }
+                });
+                
+                previewDiv.appendChild(video);
+            }
+        });
+
+        // Form submission
+        document.getElementById('vehicleForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageDiv = document.getElementById('submitMessage');
+            
+            // Validate required fields
+            const category = formData.get('selected_category');
+            const brand = formData.get('selected_brand');
+            const model = formData.get('selected_model');
+            const images = formData.getAll('vehicle_images');
+            
+            if (!category || !brand || !model) {
+                messageDiv.innerHTML = '<div class="error">Please select category, brand, and model.</div>';
+                return;
+            }
+            
+            if (images.length === 0) {
+                messageDiv.innerHTML = '<div class="error">Please select at least 1 image.</div>';
+                return;
+            }
+            
+            if (images.length > 4) {
+                messageDiv.innerHTML = '<div class="error">Maximum 4 images allowed.</div>';
+                return;
+            }
+            
+            messageDiv.innerHTML = '<div>Uploading vehicle...</div>';
+            
+            // Submit form
+            fetch('/seller-dashboard-form/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.innerHTML = '<div class="success">' + data.message + '</div>';
+                    this.reset();
+                    document.getElementById('imagePreview').innerHTML = '';
+                    document.getElementById('videoPreview').innerHTML = '';
+                } else {
+                    messageDiv.innerHTML = '<div class="error">Error: ' + data.error + '</div>';
+                }
+            })
+            .catch(error => {
+                messageDiv.innerHTML = '<div class="error">Upload failed: ' + error.message + '</div>';
+            });
+        });
+    </script>
+</body>
+</html>
