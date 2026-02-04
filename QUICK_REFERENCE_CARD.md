@@ -171,6 +171,29 @@ pre-commit run --all-files
 
 ---
 
+## 📦 SBOM (Quick)
+
+### Local
+```bash
+# Install syft (Linux/macOS)
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+# Generate CycloneDX JSON SBOM
+syft . -o cyclonedx-json=sbom.json
+
+# Or use provided script
+bash scripts/generate-sbom.sh
+```
+
+### Windows
+```powershell
+scripts\generate-sbom.bat
+```
+
+### CI
+SBOM is produced automatically by the `sbom` job in the `security-scan` workflow and uploaded as an artifact named `sbom` (download `sbom.json`).
+
+
 ## 📊 REPORTS
 
 ### Location
