@@ -1,0 +1,24 @@
+[tool.pip-audit]
+# Configuration for pip-audit dependency vulnerability scanner
+
+# Ignore specific vulnerabilities (if needed)
+# Format: "GHSA-xxxx-xxxx-xxxx" or "CVE-2024-xxxxx"
+# ignore = [
+#     "GHSA-xxxx-xxxx-xxxx",  # Reason: Not applicable to our use case
+#     "CVE-2024-xxxxx",       # Reason: Waiting for patch
+# ]
+
+# Skip audit for specific packages (rarely used)
+# skip = ["package-name"]
+
+# Output format: json, markdown, columns (default)
+format = "json"
+
+# Show vulnerability details
+description = true
+
+# Fix vulnerabilities automatically (when available)
+# fix = true
+
+# Vulnerable dependency resolution strategy
+vulnerable-dependency-resolution = "eager"

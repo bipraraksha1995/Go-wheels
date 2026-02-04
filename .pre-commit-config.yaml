@@ -1,0 +1,95 @@
+repos:
+  # pip-audit: Python dependency vulnerability scanner
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.6.3
+    hooks:
+      - id: pip-audit
+        name: 🔍 pip-audit (Python Vulnerabilities)
+        entry: pip-audit --desc
+        language: python
+        types: [python]
+        files: ^requirements\.txt$
+        stages: [commit]
+        additional_dependencies: ['pip-audit']
+
+  # Safety: Alternative Python vulnerability scanner
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.1
+    hooks:
+      - id: python-safety-dependencies-check
+        name: 🛡️ Safety (Python Vulnerabilities)
+        files: requirements\.txt$
+        stages: [commit]
+
+  # Bandit: Python security issue scanner
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: 🔐 Bandit (Python Security)
+        args: [--skip=B101,B601]  # Skip assert_used, paramiko_call_with_password
+        types: [python]
+        exclude: ^(tests/|migrations/)
+
+  # Hadolint: Dockerfile linting for security
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.0
+    hooks:
+      - id: hadolint-docker
+        name: 🐋 Hadolint (Dockerfile Security)
+        types: [dockerfile]
+
+  # YAML validation
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: yaml-unsafe
+        name: 🔒 YAML Security Check
+        types: [yaml]
+
+  # JSON validation
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-json
+        name: 📋 JSON Validation
+        types: [json]
+
+  # Check for secrets (API keys, passwords)
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: 🔑 Detect Secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: package.lock.json
+        types: [text]
+
+  # Check for merge conflicts
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-merge-conflict
+        name: ⚠️ Check Merge Conflicts
+        types: [text]
+
+  # Check for debugger imports (pdb, ipdb, etc.)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: debug-statements
+        name: 🐛 Debug Statement Check
+        types: [python]
+
+  # Trailing whitespace
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: ✂️ Trim Trailing Whitespace
+        types: [text]
+
+# Configuration
+default_stages: [commit]
+fail_fast: false
+minimum_pre_commit_version: '2.15.0'
