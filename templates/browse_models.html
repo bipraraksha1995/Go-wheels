@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Browse Models - {{ brand.name }}</title>
+    <style>
+        .model-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; }
+        .model-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; }
+        .model-card:hover { background-color: #f5f5f5; }
+        .model-image { width: 100%; height: 150px; object-fit: cover; border-radius: 5px; }
+        .breadcrumb { padding: 10px 20px; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <div class="breadcrumb">
+        <a href="/browse-groups/">Groups</a> > 
+        <a href="/browse-categories/{{ brand.category.group.id }}/">{{ brand.category.group.name }}</a> > 
+        <a href="/browse-brands/{{ brand.category.id }}/">{{ brand.category.name }}</a> > 
+        {{ brand.name }}
+    </div>
+    
+    <h1>Models for {{ brand.name }}</h1>
+    <div class="model-grid">
+        {% for model in models %}
+        <div class="model-card">
+            <img src="{{ model.image.url }}" alt="{{ model.name }}" class="model-image">
+            <h3>{{ model.name }}</h3>
+            <button onclick="searchVehicles('{{ brand.category.name }}', '{{ brand.name }}', '{{ model.name }}')">
+                View Available Vehicles
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+    function searchVehicles(category, brand, model) {
+        const url = `/get-vehicles/?cat=${encodeURIComponent(category)}&br=${encodeURIComponent(brand)}&mod=${encodeURIComponent(model)}`;
+        window.location.href = `/browse-vehicles/?category=${encodeURIComponent(category)}&brand=${encodeURIComponent(brand)}&model=${encodeURIComponent(model)}`;
+    }
+    </script>
+</body>
+</html>

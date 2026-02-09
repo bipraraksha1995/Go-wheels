@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Login - GoWheels</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        body {
+            background-image: linear-gradient(rgba(44, 24, 16, 0.8), rgba(44, 24, 16, 0.8)), url('https://i.pinimg.com/1200x/94/58/33/9458333b50f48df21804133302bbd7b2.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+        .login-main {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 80px);
+            padding: 2rem;
+        }
+        .login-container {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            max-width: 450px;
+            width: 100%;
+        }
+        .login-step {
+            display: none;
+        }
+        .login-step.active {
+            display: block;
+        }
+        .login-card h2 {
+            font-family: 'Arial Black', Arial, sans-serif;
+            font-size: 2.2rem;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .login-card p {
+            color: #F5F5DC;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        .input-group label {
+            display: block;
+            color: #FFD700;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .input-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            font-size: 1.1rem;
+            backdrop-filter: blur(10px);
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+        .otp-inputs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .otp-input {
+            width: 50px !important;
+            height: 50px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFD700;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 215, 0, 0.5);
+        }
+        .resend-text {
+            text-align: center;
+            margin-top: 1rem;
+            color: #F5F5DC;
+        }
+        .resend-text a {
+            color: #FFD700;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .resend-text a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar" style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(44, 24, 16, 0.95) 100%); backdrop-filter: blur(20px); border-bottom: 2px solid rgba(255, 215, 0, 0.3); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+            <div class="nav-brand" style="text-align: left;">
+                <h1 style="margin: 0; text-align: left; font-size: 2.2rem; font-family: 'Arial Black', Arial, sans-serif; color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"><span style="display: inline-block; animation: rotate 2s linear infinite; font-size: 2.5rem;">🛞</span>GoWheels</h1>
+            </div>
+            <ul class="nav-menu" style="font-family: 'Arial', sans-serif; font-weight: 600;">
+                <li><a href="/" style="color: #FFFFFF; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Home</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main class="login-main">
+        <div class="login-container">
+            <!-- Phone Number Step -->
+            <div id="admin-phone-step" class="login-step active">
+                <div class="login-card">
+                    <h2>🔐 Super Admin Access</h2>
+                    <p>Enter your authorized admin phone number</p>
+                    
+                    <form id="admin-phone-form">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <label for="admin-phone">Admin Phone Number</label>
+                            <input type="tel" id="admin-phone" placeholder="+91 9876543210" required>
+                        </div>
+                        <button type="submit" class="btn-submit">Send Admin OTP</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- OTP Verification Step -->
+            <div id="admin-otp-step" class="login-step">
+                <div class="login-card">
+                    <h2>🔑 Verify Admin OTP</h2>
+                    <p>Enter the 6-digit admin code sent to <span id="admin-phone-display"></span></p>
+                    
+                    <form id="admin-otp-form">
+                        <div class="otp-inputs">
+                            <input type="text" maxlength="1" class="otp-input">
+                            <input type="text" maxlength="1" class="otp-input">
+                            <input type="text" maxlength="1" class="otp-input">
+                            <input type="text" maxlength="1" class="otp-input">
+                            <input type="text" maxlength="1" class="otp-input">
+                            <input type="text" maxlength="1" class="otp-input">
+                        </div>
+                        <button type="submit" class="btn-submit">Access Admin Panel</button>
+                        <p class="resend-text">Didn't receive code? <a href="#" id="admin-resend-otp">Resend Admin OTP</a></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const phoneStep = document.getElementById('admin-phone-step');
+            const otpStep = document.getElementById('admin-otp-step');
+            const phoneForm = document.getElementById('admin-phone-form');
+            const otpForm = document.getElementById('admin-otp-form');
+            const phoneInput = document.getElementById('admin-phone');
+            const phoneDisplay = document.getElementById('admin-phone-display');
+            const otpInputs = document.querySelectorAll('.otp-input');
+            
+            let currentPhone = '';
+            
+            phoneForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                currentPhone = phoneInput.value.replace(/\D/g, '');
+                
+                if (currentPhone.length >= 10) {
+                    phoneDisplay.textContent = currentPhone;
+                    alert(`Admin OTP sent to ${currentPhone}. Use OTP: 123456`);
+                    
+                    // Auto-fill OTP
+                    otpInputs[0].value = '1';
+                    otpInputs[1].value = '2';
+                    otpInputs[2].value = '3';
+                    otpInputs[3].value = '4';
+                    otpInputs[4].value = '5';
+                    otpInputs[5].value = '6';
+                    
+                    phoneStep.classList.remove('active');
+                    otpStep.classList.add('active');
+                } else {
+                    alert('Please enter a valid admin phone number');
+                }
+            });
+            
+            otpForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const otp = Array.from(otpInputs).map(input => input.value).join('');
+                
+                if (otp.length === 6) {
+                    const formData = new FormData();
+                    formData.append('phone', currentPhone);
+                    formData.append('otp', otp);
+                    
+                    fetch('/super-admin-login/', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Super Admin login successful!');
+                            window.location.href = '/super-admin-panel/';
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Login failed. Please try again.');
+                    });
+                } else {
+                    alert('Please enter complete OTP');
+                }
+            });
+            
+            otpInputs.forEach((input, index) => {
+                input.addEventListener('input', function() {
+                    if (this.value.length === 1 && index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    }
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                        otpInputs[index - 1].focus();
+                    }
+                });
+            });
+            
+            document.getElementById('admin-resend-otp').addEventListener('click', function(e) {
+                e.preventDefault();
+                alert(`Admin OTP resent to ${currentPhone}. Use OTP: 123456`);
+                
+                // Auto-fill OTP on resend
+                otpInputs[0].value = '1';
+                otpInputs[1].value = '2';
+                otpInputs[2].value = '3';
+                otpInputs[3].value = '4';
+                otpInputs[4].value = '5';
+                otpInputs[5].value = '6';
+            });
+        });
+    </script>
+</body>
+</html>

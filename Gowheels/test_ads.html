@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Ads Functionality</title>
+</head>
+<body>
+    <button onclick="showScreen('ads')">📢 Ads</button>
+    
+    <div id="ads-screen" style="display: none;">
+        <h2>📢 Ads Management</h2>
+        <div onclick="alert('Promote clicked!')">
+            <h3>🚀 Promote</h3>
+            <p>₹50/day</p>
+        </div>
+        <div onclick="alert('Sponsor clicked!')">
+            <h3>⭐ Sponsor</h3>
+            <p>₹100/day</p>
+        </div>
+    </div>
+
+    <script>
+        function showScreen(screenName) {
+            if (screenName === 'ads') {
+                document.getElementById('ads-screen').style.display = 'block';
+                alert('Ads screen should now be visible!');
+            }
+        }
+    </script>
+</body>
+</html>

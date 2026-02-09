@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Models - {{ brand.name }}</title>
+    <style>
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .model-list { margin-top: 30px; }
+        .model-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 4px; }
+        .model-image { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .breadcrumb { padding: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/manage-groups/">Groups</a> > 
+            <a href="/manage-categories/{{ brand.category.group.id }}/">{{ brand.category.group.name }}</a> > 
+            <a href="/manage-brands/{{ brand.category.id }}/">{{ brand.category.name }}</a> > 
+            {{ brand.name }}
+        </div>
+        
+        <h1>Manage Models for {{ brand.name }}</h1>
+        
+        <form id="modelForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Model Name:</label>
+                <input type="text" id="modelName" required>
+            </div>
+            <div class="form-group">
+                <label>Model Image:</label>
+                <input type="file" id="modelImage" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn">Create Model</button>
+        </form>
+
+        <div class="model-list">
+            <h2>Existing Models</h2>
+            {% for model in models %}
+            <div class="model-item">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="{{ model.image.url }}" alt="{{ model.name }}" class="model-image">
+                    <span>{{ model.name }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('modelForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('name', document.getElementById('modelName').value);
+        formData.append('image', document.getElementById('modelImage').files[0]);
+        
+        fetch('/manage-models/{{ brand.id }}/', {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    });
+    </script>
+</body>
+</html>

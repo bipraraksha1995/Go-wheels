@@ -1,0 +1,461 @@
+openapi: 3.0.3
+info:
+  title: GoWheels API
+  description: |
+    Vehicle rental marketplace API for GoWheels platform.
+    
+    ## Authentication
+    - API Key: Include `X-API-Key` header
+    - Session: Cookie-based authentication
+    - OAuth2: Google/GitHub authentication
+    
+    ## Rate Limiting
+    - 100 requests per minute per IP
+    - 1000 requests per hour per user
+    
+    ## Versioning
+    - Current version: v1
+    - Base URL: `/api/v1/`
+    - Deprecated endpoints marked with `deprecated: true`
+  version: 1.0.0
+  contact:
+    email: api@gowheels.com
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.gowheels.com/api/v1
+    description: Production
+  - url: https://staging.gowheels.com/api/v1
+    description: Staging
+  - url: http://localhost:8000/api/v1
+    description: Development
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Vehicles
+    description: Vehicle listing and management
+  - name: Users
+    description: User profile management
+  - name: Health
+    description: System health and monitoring
+
+paths:
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, name, pincode]
+              properties:
+                phone:
+                  type: string
+                  pattern: '^\d{10}$'
+                  example: "7305675201"
+                name:
+                  type: string
+                  minLength: 2
+                  example: "John Doe"
+                pincode:
+                  type: string
+                  pattern: '^\d{6}$'
+                  example: "600001"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Phone number already registered
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login with OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, otp]
+              properties:
+                phone:
+                  type: string
+                  example: "7305675201"
+                otp:
+                  type: string
+                  pattern: '^\d{6}$'
+                  example: "123456"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  unique_id:
+                    type: string
+                  token:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/send-otp:
+    post:
+      tags: [Authentication]
+      summary: Send OTP to phone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+                  example: "7305675201"
+      responses:
+        '200':
+          description: OTP sent successfully
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /vehicles:
+    get:
+      tags: [Vehicles]
+      summary: List vehicles
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [car, bike, truck]
+        - name: brand
+          in: query
+          schema:
+            type: string
+        - name: model
+          in: query
+          schema:
+            type: string
+        - name: pincode
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: List of vehicles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vehicles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Vehicle'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      tags: [Vehicles]
+      summary: Create vehicle listing
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleCreate'
+      responses:
+        '201':
+          description: Vehicle created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /vehicles/{id}:
+    get:
+      tags: [Vehicles]
+      summary: Get vehicle details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Vehicle details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Vehicles]
+      summary: Update vehicle
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleUpdate'
+      responses:
+        '200':
+          description: Vehicle updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Vehicles]
+      summary: Delete vehicle
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Vehicle deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/profile:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      responses:
+        '200':
+          description: Application is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /ready:
+    get:
+      tags: [Health]
+      summary: Readiness probe
+      responses:
+        '200':
+          description: Application is ready
+        '503':
+          description: Application not ready
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Vehicle:
+      type: object
+      properties:
+        id:
+          type: integer
+        category_name:
+          type: string
+        brand_name:
+          type: string
+        model_name:
+          type: string
+        year:
+          type: integer
+        price:
+          type: number
+          format: float
+        pricing_type:
+          type: string
+          enum: [per-hour, per-day]
+        seller_phone:
+          type: string
+        pincode:
+          type: string
+        available:
+          type: boolean
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+
+    VehicleCreate:
+      type: object
+      required: [category_name, brand_name, model_name, year, price]
+      properties:
+        category_name:
+          type: string
+        brand_name:
+          type: string
+        model_name:
+          type: string
+        year:
+          type: integer
+          minimum: 1900
+          maximum: 2100
+        price:
+          type: number
+          minimum: 0
+        pricing_type:
+          type: string
+          enum: [per-hour, per-day]
+        pincode:
+          type: string
+
+    VehicleUpdate:
+      type: object
+      properties:
+        price:
+          type: number
+        available:
+          type: boolean
+        pincode:
+          type: string
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        pincode:
+          type: string
+        unique_id:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

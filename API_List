@@ -1,0 +1,231 @@
+# GoWheels API 
+
+## Complete API Reference - 48 APIs
+
+### **Authentication APIs (4)**
+
+1. **Line 23:** `check_phone(request)` - Phone verification API
+   - **Method:** POST
+   - **Returns:** `JsonResponse({'exists': exists})`
+
+2. **Line 38:** `register_view(request)` - User registration API
+   - **Method:** POST
+   - **Returns:** `JsonResponse({'success': True, 'message': 'Registration successful'})`
+
+3. **Line 62:** `login_view(request)` - User login API
+   - **Method:** POST
+   - **Returns:** `JsonResponse({'success': True, 'message': 'Login successful', 'unique_id': user_profile.unique_id})`
+
+4. **Line 95:** `super_admin_login(request)` - Admin login API
+   - **Method:** POST
+   - **Returns:** `JsonResponse({'success': True, 'message': 'Super Admin login successful'})`
+
+### **Vehicle Management APIs (16)**
+
+5. **Line 123:** `add_vehicle(request)` - Add vehicle API
+   - **Method:** POST
+   - **Returns:** `JsonResponse({'success': True, 'message': 'Vehicle and images added successfully'})`
+
+6. **Line 267:** `save_category_only(request)` - Save category API
+   - **Method:** POST
+   - **Returns:** `JsonResponse({'success': True})`
+
+7. **Line 280:** `get_added_categories(request)` - Get added categories API
+   - **Method:** GET
+   - **Returns:** `JsonResponse({'categories': categories_data})`
+
+8. **Line 300:** `submit_vehicle(request)` - Submit vehicle API
+   - **Method:** POST
+   - **Returns:** `JsonResponse({'success': True})`
+
+9. **Line 350:** `get_all_vehicles(request)` - Get all vehicles API
+   - **Method:** GET
+   - **Returns:** `JsonResponse({'vehicles': vehicles_data})`
+
+10. **Line 375:** `save_category(request)` - Save category API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'message': f'Category {category_type} saved successfully'})`
+
+11. **Line 400:** `add_brands(request)` - Add brand images API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'message': 'Brand images uploaded successfully'})`
+
+12. **Line 425:** `seller_form(request)` - Seller form API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'message': 'Vehicle listed successfully'})`
+
+13. **Line 500:** `get_vehicles(request)` - Get vehicles API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'vehicles': vehicles_data})`
+
+14. **Line 575:** `state_admin_add_vehicle(request)` - State admin add vehicle API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'message': 'Vehicle submitted for Super Admin approval'})`
+
+15. **Line 625:** `search_vehicles(request)` - Search vehicles API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'vehicles': vehicles_data})`
+
+16. **Line 650:** `get_pending_approvals(request)` - Get pending approvals API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'vehicles': vehicles_data})`
+
+17. **Line 675:** `approve_vehicle(request, vehicle_id)` - Approve vehicle API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+18. **Line 690:** `reject_vehicle(request, vehicle_id)` - Reject vehicle API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+19. **Line 705:** `get_state_admin_vehicles(request)` - Get state admin vehicles API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'vehicles': vehicles_data})`
+
+20. **Line 730:** `delete_vehicle(request, vehicle_id)` - Delete vehicle API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'message': 'Vehicle deleted successfully'})`
+
+### **Seller Dashboard APIs (6)**
+
+21. **Line 775:** `edit_vehicle(request, vehicle_id)` - Edit vehicle API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'message': 'Vehicle updated successfully'})`
+
+22. **Line 825:** `seller_dashboard_form(request)` - Seller dashboard form API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'message': 'Vehicle listed successfully'})`
+
+23. **Line 900:** `track_vehicle_click(request)` - Track vehicle click API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+24. **Line 925:** `get_seller_vehicles(request)` - Get seller vehicles API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'vehicles': vehicles_data, 'total': total_count, 'active': active_count})`
+
+25. **Line 1000:** `toggle_vehicle_status(request, vehicle_id)` - Toggle vehicle status API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'available': vehicle.available})`
+
+### **Brand & Model Management APIs (6)**
+
+26. **Line 1025:** `get_brand_images(request)` - Get brand images API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'brands': brands})`
+
+27. **Line 1075:** `get_model_images(request)` - Get model images API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'images': model_images, 'ids': model_ids, 'models': models})`
+
+28. **Line 1125:** `delete_brand_image(request, image_id)` - Delete brand image API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+29. **Line 1150:** `delete_model_image(request, image_id)` - Delete model image API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+30. **Line 1175:** `get_models_for_brand(request, brand_name)` - Get models for brand API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'models': models_data})`
+
+31. **Line 1200:** `get_state_admin_vehicle_status(request)` - Get state admin vehicle status API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'vehicles': vehicles_data})`
+
+### **User Profile APIs (3)**
+
+32. **Line 1250:** `update_profile(request)` - Update profile API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'message': 'Profile updated successfully'})`
+
+33. **Line 1300:** `get_user_profile_api(request)` - Get user profile API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'success': True, 'name': name, 'phone': phone, 'pincode': pincode, 'unique_id': unique_id})`
+
+### **Category Management APIs (4)**
+
+34. **Line 1325:** `add_category_api(request)` - Add category API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+35. **Line 1350:** `get_categories_api(request)` - Get categories API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'categories': categories_data})`
+
+36. **Line 1375:** `delete_category_api(request, category_id)` - Delete category API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+37. **Line 1400:** `edit_category_api(request, category_id)` - Edit category API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+### **Admin Management APIs (5)**
+
+38. **Line 1450:** `add_brands_models_api(request)` - Add brands models API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+39. **Line 1500:** `add_model_to_brand_api(request)` - Add model to brand API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+40. **Line 1550:** `get_brands_for_category(request, category_name)` - Get brands for category API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'brands': brands_data})`
+
+41. **Line 1600:** `save_admin_data(request)` - Save admin data API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True})`
+
+42. **Line 1675:** `get_admin_groups(request)` - Get admin groups API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'success': True, 'groups': list(groups)})`
+
+43. **Line 1700:** `get_all_admin_data(request)` - Get all admin data API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'success': True, 'categories': categories, 'brands': brands, 'models': models})`
+
+### **User Management APIs (4)**
+
+44. **Line 1775:** `get_all_users_api(request)` - Get all users API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'success': True, 'users': users_data})`
+
+45. **Line 1825:** `get_user_details_api(request, user_id)` - Get user details API
+    - **Method:** GET
+    - **Returns:** `JsonResponse({'success': True, 'user': user_data, 'vehicles': vehicles_data})`
+
+46. **Line 1900:** `block_user_vehicle(request, vehicle_id)` - Block user vehicle API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'message': 'Vehicle blocked successfully'})`
+
+47. **Line 1925:** `delete_user_vehicle(request, vehicle_id)` - Delete user vehicle API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'message': 'Vehicle deleted successfully'})`
+
+48. **Line 1950:** `block_user(request, user_id)` - Block user API
+    - **Method:** POST
+    - **Returns:** `JsonResponse({'success': True, 'blocked': user_profile.blocked, 'message': f'User {action} successfully'})`
+
+## **API Summary:**
+- **Total APIs:** 48
+- **Authentication:** 4 APIs
+- **Vehicle Management:** 16 APIs
+- **Seller Dashboard:** 6 APIs
+- **Brand & Model:** 6 APIs
+- **User Profile:** 3 APIs
+- **Category Management:** 4 APIs
+- **Admin Management:** 5 APIs
+- **User Management:** 4 APIs
+
+## **Key Features:**
+- All APIs use `@csrf_exempt` decorator
+- All APIs return `JsonResponse` format
+- Error handling with try-catch blocks
+- Session-based authentication
+- File upload support
+- Database operations via Django ORM
+- Multi-role access control (users, sellers, admins)

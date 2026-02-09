@@ -127,6 +127,14 @@
             background: #D00;
             color: white;
         }
+        .btn-promote {
+            background: #6f42c1;
+            color: white;
+        }
+        .btn-promoted {
+            background: #28a745;
+            opacity: 0.8;
+        }
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -255,14 +263,22 @@
             const container = document.getElementById('vehicles-list');
             let html = '';
 
+            // Sort vehicles - promoted first, then by creation date
+            vehicles.sort((a, b) => {
+                if (a.promoted && !b.promoted) return -1;
+                if (!a.promoted && b.promoted) return 1;
+                return b.id - a.id; // Newer first
+            });
+
             vehicles.forEach(vehicle => {
                 const statusClass = vehicle.available ? 'status-active' : 'status-inactive';
                 const statusText = vehicle.available ? 'Active' : 'Inactive';
+                const promotedBadge = vehicle.promoted ? '<span style="background: #6f42c1; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 8px;">PROMOTED</span>' : '';
                 
                 html += `
-                    <div class="vehicle-card">
+                    <div class="vehicle-card" style="${vehicle.promoted ? 'border: 2px solid #6f42c1; background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);' : ''}">
                         <div class="vehicle-header">
-                            <div class="vehicle-title">${vehicle.category_name} - ${vehicle.brand_name} ${vehicle.model_name}</div>
+                            <div class="vehicle-title">${vehicle.category_name} - ${vehicle.brand_name} ${vehicle.model_name}${promotedBadge}</div>
                             <div class="status-badge ${statusClass}">${statusText}</div>
                         </div>
                         
@@ -314,6 +330,7 @@
                         <div class="actions">
                             <button class="btn btn-edit" onclick="editVehicle(${vehicle.id})">Edit</button>
                             <button class="btn btn-toggle" onclick="toggleStatus(${vehicle.id})">${vehicle.available ? 'Deactivate' : 'Activate'}</button>
+                            <button class="btn btn-promote ${vehicle.promoted ? 'btn-promoted' : ''}" onclick="promoteVehicle(${vehicle.id})">${vehicle.promoted ? 'Promoted ✓' : 'Promote'}</button>
                             <button class="btn btn-delete" onclick="deleteVehicle(${vehicle.id})">Delete</button>
                         </div>
                     </div>
@@ -464,6 +481,76 @@
                 }
             }
             return cookieValue;
+        }
+        
+        function promoteVehicle(vehicleId) {
+            // Get current promotion prices
+            fetch('/get-promotion-prices/')
+            .then(response => response.json())
+            .then(data => {
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+                
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 8px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <h3 style="margin: 0 0 20px 0; color: #6f42c1;">🚀 Promote Vehicle</h3>
+                        <div style="background: #f8f9fa; padding: 16px; border-radius: 6px; margin-bottom: 20px;">
+                            <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">Current Rates:</p>
+                            <p style="margin: 0; font-weight: bold; color: #6f42c1;">₹${data.promote_price} per day</p>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; font-weight: 500; margin-bottom: 4px;">Number of Days:</label>
+                            <input type="number" id="promote-days" min="1" value="1" style="width: 100%; padding: 8px; border: 1px solid #DDD; border-radius: 4px;" oninput="calculateAmount(${data.promote_price})">
+                        </div>
+                        <div style="background: #e8f5e8; padding: 12px; border-radius: 4px; margin-bottom: 20px;">
+                            <p style="margin: 0; font-weight: bold; color: #007600;">Total Amount: ₹<span id="total-amount">${data.promote_price}</span></p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="confirmPromotion(${vehicleId})" style="background: #6f42c1; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; flex: 1;">Promote Now</button>
+                            <button onclick="closeModal()" style="background: #D00; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; flex: 1;">Cancel</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+            })
+            .catch(error => {
+                alert('Error loading promotion prices');
+            });
+        }
+        
+        function calculateAmount(pricePerDay) {
+            const days = document.getElementById('promote-days').value || 1;
+            const total = days * pricePerDay;
+            document.getElementById('total-amount').textContent = total;
+        }
+        
+        function confirmPromotion(vehicleId) {
+            const days = document.getElementById('promote-days').value;
+            if (!days || days < 1) {
+                alert('Please enter valid number of days');
+                return;
+            }
+            
+            fetch(`/seller-promote/${vehicleId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Vehicle promoted successfully for ${days} days!`);
+                    closeModal();
+                    loadVehicles(); // Reload to show promoted status
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error promoting vehicle');
+            });
         }
     </script>
 </body>

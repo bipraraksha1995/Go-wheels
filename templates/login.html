@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - GoWheels</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            padding: 12px 16px;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            padding: 32px 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-step {
+            display: none;
+        }
+        
+        .login-step.active {
+            display: block;
+        }
+        
+        .login-card h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0F1111;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .login-card p {
+            color: #565959;
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .input-group {
+            margin-bottom: 16px;
+        }
+        
+        .input-group label {
+            display: block;
+            color: #0F1111;
+            font-weight: 500;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            background: #FFF;
+            color: #0F1111;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #FF9900;
+            box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
+        }
+        
+        .otp-inputs {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        
+        .otp-input {
+            width: 48px !important;
+            height: 48px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            border: 2px solid #DDD;
+            border-radius: 8px;
+            background: #FFF;
+            color: #0F1111;
+        }
+        
+        .otp-input:focus {
+            border-color: #FF9900;
+            box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #FF9900;
+            color: #FFF;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-submit:hover {
+            background: #E88B00;
+        }
+        
+        .btn-submit:active {
+            background: #D17B00;
+        }
+        
+        .resend-text {
+            text-align: center;
+            margin-top: 16px;
+            color: #565959;
+            font-size: 14px;
+        }
+        
+        .resend-text a {
+            color: #0066C0;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .resend-text a:hover {
+            text-decoration: underline;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: #565959;
+            font-size: 14px;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #DDD;
+        }
+        
+        .divider span {
+            margin: 0 12px;
+        }
+        
+        .oauth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .btn-oauth {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            background: #FFF;
+            color: #0F1111;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        
+        .btn-oauth:hover {
+            background: #F7F8F8;
+            border-color: #0066C0;
+        }
+        
+        .btn-oauth-google {
+            border-color: #DDD;
+        }
+        
+        .btn-oauth-google:hover {
+            background: #F9F9F9;
+            border-color: #4285F4;
+        }
+        
+        .btn-oauth-github {
+            border-color: #DDD;
+        }
+        
+        .btn-oauth-github:hover {
+            background: #F9F9F9;
+            border-color: #333;
+        }
+        
+        .oauth-icon {
+            font-size: 18px;
+        }
+        
+        .profile-photo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .photo-upload {
+            display: inline-block;
+        }
+        
+        .photo-label {
+            cursor: pointer;
+        }
+        
+        .photo-placeholder {
+            width: 80px;
+            height: 80px;
+            border: 2px dashed #DDD;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #F7F8F8;
+            transition: all 0.2s;
+        }
+        
+        .photo-placeholder:hover {
+            border-color: #FF9900;
+            background: #FFF3E0;
+        }
+        
+        .photo-placeholder span {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .photo-placeholder p {
+            color: #565959;
+            margin: 0;
+            font-size: 10px;
+        }
+        
+        .photo-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #FF9900;
+        }
+        
+        .user-id-display {
+            background: #E8F5E8;
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        
+        .user-id-display strong {
+            color: #2E7D32;
+            font-size: 16px;
+        }
+        
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 24px 20px;
+                margin: 16px;
+            }
+            
+            .otp-inputs {
+                gap: 6px;
+            }
+            
+            .otp-input {
+                width: 44px !important;
+                height: 44px;
+                font-size: 16px;
+            }
+            
+            .login-card h2 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🛞 GoWheels</div>
+    </div>
+    
+    <div class="main">
+        <div class="login-container">
+            <!-- Phone Number Step -->
+            <div id="phone-step" class="login-step active">
+                <div class="login-card">
+                    <h2>Welcome to GoWheels</h2>
+                    <p>Enter your phone number to continue</p>
+                    
+                    <form id="phone-form">
+                        <div class="input-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" placeholder="9876543210" required>
+                        </div>
+                        <button type="submit" class="btn-submit">Send OTP</button>
+                    </form>
+                    
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <div class="oauth-buttons">
+                        <a href="/accounts/google/login/" class="btn-oauth btn-oauth-google">
+                            <span class="oauth-icon">🔐</span>
+                            Login with Google
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OTP Verification Step -->
+            <div id="otp-step" class="login-step">
+                <div class="login-card">
+                    <h2>Verify OTP</h2>
+                    <p>Enter the 6-digit code sent to <span id="phone-display"></span></p>
+                    
+                    <form id="otp-form">
+                        <div class="otp-inputs">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                        </div>
+                        <button type="submit" class="btn-submit">Verify & Login</button>
+                        <div class="login-options">
+                            <p class="resend-text">Didn't receive code? <a href="#" id="resend-otp">Resend OTP</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const phoneStep = document.getElementById('phone-step');
+            const otpStep = document.getElementById('otp-step');
+            const phoneForm = document.getElementById('phone-form');
+            const otpForm = document.getElementById('otp-form');
+            const phoneInput = document.getElementById('phone');
+            const phoneDisplay = document.getElementById('phone-display');
+            const otpInputs = document.querySelectorAll('.otp-input');
+            let currentPhone = '';
+            
+            phoneForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                currentPhone = phoneInput.value;
+                if (currentPhone.length === 10) {
+                    phoneDisplay.textContent = currentPhone;
+                    fetch('/send-otp/', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+                        body: JSON.stringify({ phone: currentPhone })
+                    }).then(r => r.json()).then(d => {
+                        if (d.success) {
+                            alert('OTP sent to your mobile');
+                            showStep(otpStep);
+                        } else alert(d.error || 'Failed to send OTP');
+                    });
+                } else alert('Enter valid 10-digit phone number');
+            });
+            
+            otpForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const otp = Array.from(otpInputs).map(i => i.value).join('');
+                if (otp.length === 6) {
+                    fetch('/login/', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken')},
+                        body: `phone=${currentPhone}&otp=${otp}`
+                    }).then(r => r.json()).then(d => {
+                        if (d.success) {
+                            alert('Login successful!');
+                            window.location.href = '/user-dashboard/';
+                        } else alert(d.error || 'Invalid OTP');
+                    });
+                }
+            });
+            
+            otpInputs.forEach((input, index) => {
+                input.addEventListener('input', function() {
+                    if (this.value.length === 1 && index < otpInputs.length - 1) otpInputs[index + 1].focus();
+                });
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && this.value === '' && index > 0) otpInputs[index - 1].focus();
+                });
+            });
+            
+            function showStep(step) {
+                document.querySelectorAll('.login-step').forEach(s => s.classList.remove('active'));
+                step.classList.add('active');
+            }
+            
+            function getCookie(name) {
+                let c = null;
+                if (document.cookie) {
+                    document.cookie.split(';').forEach(cookie => {
+                        const t = cookie.trim();
+                        if (t.startsWith(name + '=')) c = decodeURIComponent(t.substring(name.length + 1));
+                    });
+                }
+                return c;
+            }
+        });
+    </script>
+</body>
+</html>

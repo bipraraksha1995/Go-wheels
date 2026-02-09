@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .models import Vehicle, UserProfile, BrandImage, ModelImage, VehicleImage
+from .models import Vehicle, UserProfile, BrandImage, ModelImage, VehicleImage, Pincode, PromotionSettings, VehiclePromotion
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Count
@@ -553,6 +553,7 @@ def get_vehicles(request):
         brand_name = str(request.GET.get('br', '')) 
         model_name = str(request.GET.get('mod', ''))
         pincode = str(request.GET.get('pincode', ''))
+        radius_km = int(request.GET.get('radius', 10))  # Default 10km radius
         
         vehicles = Vehicle.objects.filter(available=True, approval_status='approved')
         
@@ -563,7 +564,23 @@ def get_vehicles(request):
         if model_name:
             vehicles = vehicles.filter(model_name__iexact=model_name)
         if pincode:
-            vehicles = vehicles.filter(pincode__exact=pincode)
+            # Distance-based search using Haversine formula
+            try:
+                nearby_pincodes = Pincode.get_nearby_pincodes(pincode, radius_km)
+                vehicles = vehicles.filter(pincode__in=nearby_pincodes)
+            except Exception:
+                # Fallback to simple numeric range if GPS data not available
+                try:
+                    base_pincode = int(pincode)
+                    range_size = 10
+                    min_pincode = base_pincode - range_size
+                    max_pincode = base_pincode + range_size
+                    vehicles = vehicles.filter(
+                        pincode__gte=str(min_pincode),
+                        pincode__lte=str(max_pincode)
+                    )
+                except (ValueError, TypeError):
+                    vehicles = vehicles.filter(pincode__exact=pincode)
         
         for vehicle in vehicles:
             try:
@@ -1238,6 +1255,78 @@ def super_admin_categories(request):
     if not request.session.get('super_admin_logged_in'):
         return redirect('/super-admin-login/')
     return render(request, 'super_admin_categories.html')
+
+@csrf_exempt
+def set_promotion_prices(request):
+    if request.method == 'POST':
+        try:
+            if not request.session.get('super_admin_logged_in'):
+                return JsonResponse({'success': False, 'error': 'Unauthorized'})
+            
+            promote_price = float(request.POST.get('promote_price', 50))
+            sponsor_price = float(request.POST.get('sponsor_price', 100))
+            
+            settings, created = PromotionSettings.objects.get_or_create(id=1)
+            settings.promote_price_per_day = promote_price
+            settings.sponsor_price_per_day = sponsor_price
+            settings.save()
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def get_promotion_prices(request):
+    try:
+        settings = PromotionSettings.objects.first()
+        if settings:
+            return JsonResponse({
+                'promote_price': str(settings.promote_price_per_day),
+                'sponsor_price': str(settings.sponsor_price_per_day)
+            })
+        return JsonResponse({'promote_price': '50', 'sponsor_price': '100'})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def promote_vehicle(request, vehicle_id):
+    if request.method == 'POST':
+        try:
+            user_phone = request.session.get('phone')
+            if not user_phone:
+                return JsonResponse({'success': False, 'error': 'Not authenticated'})
+            
+            vehicle = Vehicle.objects.get(id=vehicle_id, seller_phone=user_phone)
+            days = int(request.POST.get('days', 1))
+            promotion_type = request.POST.get('type', 'promote')
+            
+            settings = PromotionSettings.objects.first()
+            if not settings:
+                settings = PromotionSettings.objects.create()
+            
+            if promotion_type == 'promote':
+                amount = settings.promote_price_per_day * days
+            else:
+                amount = settings.sponsor_price_per_day * days
+            
+            VehiclePromotion.objects.create(
+                vehicle=vehicle,
+                promotion_type=promotion_type,
+                days=days,
+                amount_paid=amount
+            )
+            
+            return JsonResponse({
+                'success': True, 
+                'amount': str(amount),
+                'message': f'Vehicle {promotion_type}d for {days} days - ₹{amount}'
+            })
+        except Vehicle.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Vehicle not found'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 @csrf_exempt
 def add_category_api(request):

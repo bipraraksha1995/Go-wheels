@@ -1,0 +1,30 @@
+{
+  "dashboard": {
+    "title": "GoWheels Monitoring Dashboard",
+    "tags": ["gowheels", "production"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Application Uptime",
+        "targets": [{"expr": "gowheels_uptime_seconds"}],
+        "type": "graph"
+      },
+      {
+        "title": "CPU Usage",
+        "targets": [{"expr": "gowheels_cpu_usage_percent"}],
+        "type": "graph"
+      },
+      {
+        "title": "Memory Usage",
+        "targets": [{"expr": "gowheels_memory_usage_percent"}],
+        "type": "graph"
+      },
+      {
+        "title": "Database Connections",
+        "targets": [{"expr": "gowheels_db_connections"}],
+        "type": "graph"
+      }
+    ],
+    "refresh": "30s"
+  }
+}

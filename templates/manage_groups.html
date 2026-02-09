@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Groups</title>
+    <style>
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .group-list { margin-top: 30px; }
+        .group-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Manage Groups</h1>
+        
+        <form id="groupForm">
+            <div class="form-group">
+                <label>Group Name:</label>
+                <input type="text" id="groupName" required>
+            </div>
+            <button type="submit" class="btn">Create Group</button>
+        </form>
+
+        <div class="group-list">
+            <h2>Existing Groups</h2>
+            {% for group in groups %}
+            <div class="group-item">
+                <span>{{ group.name }} ({{ group.categories.count }} categories)</span>
+                <div>
+                    <button onclick="location.href='/manage-categories/{{ group.id }}/'" class="btn">Manage Categories</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('groupForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('name', document.getElementById('groupName').value);
+        
+        fetch('/manage-groups/', {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    });
+    </script>
+</body>
+</html>

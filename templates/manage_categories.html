@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Categories - {{ group.name }}</title>
+    <style>
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .category-list { margin-top: 30px; }
+        .category-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 4px; }
+        .category-image { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .breadcrumb { padding: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/manage-groups/">Groups</a> > {{ group.name }}
+        </div>
+        
+        <h1>Manage Categories for {{ group.name }}</h1>
+        
+        <form id="categoryForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Category Name:</label>
+                <input type="text" id="categoryName" required>
+            </div>
+            <div class="form-group">
+                <label>Category Image:</label>
+                <input type="file" id="categoryImage" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn">Create Category</button>
+        </form>
+
+        <div class="category-list">
+            <h2>Existing Categories</h2>
+            {% for category in categories %}
+            <div class="category-item">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-image">
+                    <span>{{ category.name }} ({{ category.brands.count }} brands)</span>
+                </div>
+                <div>
+                    <button onclick="location.href='/manage-brands/{{ category.id }}/'" class="btn">Manage Brands</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('categoryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('name', document.getElementById('categoryName').value);
+        formData.append('image', document.getElementById('categoryImage').files[0]);
+        
+        fetch('/manage-categories/{{ group.id }}/', {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    });
+    </script>
+</body>
+</html>

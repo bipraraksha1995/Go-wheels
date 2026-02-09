@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Vehicles - GoWheels</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            color: #0F1111;
+            line-height: 1.4;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .action-btn {
+            background: none;
+            border: 1px solid #fff;
+            color: white;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .vehicle-card {
+            background: white;
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .vehicle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .vehicle-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0F1111;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-active {
+            background: #E8F5E8;
+            color: #007600;
+        }
+        .status-inactive {
+            background: #FFEBEE;
+            color: #D00;
+        }
+        .vehicle-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .detail-item {
+            font-size: 14px;
+        }
+        .detail-label {
+            font-weight: 500;
+            color: #565959;
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-edit {
+            background: #0066C0;
+            color: white;
+        }
+        .btn-toggle {
+            background: #FF9900;
+            color: white;
+        }
+        .btn-delete {
+            background: #D00;
+            color: white;
+        }
+        .btn-promote {
+            background: #6f42c1;
+            color: white;
+        }
+        .btn-promoted {
+            background: #28a745;
+            opacity: 0.8;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0066C0;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #565959;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-top">
+            <div class="logo">My Vehicles - GoWheels</div>
+            <button class="action-btn" onclick="window.location.href='/seller-dashboard/'">← Back</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 style="margin-bottom: 24px; color: #0F1111;">My Vehicle Management</h1>
+        
+        <!-- Listing Type Tabs -->
+        <div style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 2px solid #DDD;">
+            <button id="rent-tab" onclick="showListingType('rent')" style="flex: 1; padding: 12px; border: none; border-bottom: 3px solid #667eea; background: none; color: #667eea; font-size: 16px; font-weight: 600; cursor: pointer;">🏠 Rental Vehicles</button>
+            <button id="sell-tab" onclick="showListingType('sell')" style="flex: 1; padding: 12px; border: none; border-bottom: 3px solid transparent; background: none; color: #666; font-size: 16px; font-weight: 600; cursor: pointer;">💰 Sell Vehicles</button>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-vehicles">0</div>
+                <div class="stat-label">Total Vehicles</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="active-vehicles">0</div>
+                <div class="stat-label">Active Vehicles</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-clicks">0</div>
+                <div class="stat-label">Total Clicks</div>
+            </div>
+        </div>
+
+        <div id="vehicles-list"></div>
+    </div>
+
+    <script>
+        let allVehicles = [];
+        let currentListingType = 'rent';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadVehicles();
+        });
+
+        function showListingType(type) {
+            currentListingType = type;
+            document.getElementById('rent-tab').style.borderBottom = type === 'rent' ? '3px solid #667eea' : '3px solid transparent';
+            document.getElementById('rent-tab').style.color = type === 'rent' ? '#667eea' : '#666';
+            document.getElementById('sell-tab').style.borderBottom = type === 'sell' ? '3px solid #667eea' : '3px solid transparent';
+            document.getElementById('sell-tab').style.color = type === 'sell' ? '#667eea' : '#666';
+            displayVehicles(allVehicles.filter(v => v.listing_type === type));
+        }
+
+        function loadVehicles() {
+            fetch('/get-seller-vehicles/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.vehicles) {
+                        allVehicles = data.vehicles;
+                        displayVehicles(allVehicles.filter(v => v.listing_type === currentListingType));
+                        updateStats(data);
+                    } else {
+                        document.getElementById('vehicles-list').innerHTML = '<p style="text-align: center; color: #565959; padding: 40px;">No vehicles found.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('vehicles-list').innerHTML = '<p style="text-align: center; color: #D00; padding: 40px;">Error loading vehicles</p>';
+                });
+        }
+
+        function displayVehicles(vehicles) {
+            const container = document.getElementById('vehicles-list');
+            
+            if (vehicles.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: #565959; padding: 40px;">No ${currentListingType === 'rent' ? 'rental' : 'sell'} vehicles found.</p>`;
+                return;
+            }
+            
+            let html = '';
+
+            vehicles.forEach(vehicle => {
+                const statusClass = vehicle.available ? 'status-active' : 'status-inactive';
+                const statusText = vehicle.available ? 'Active' : 'Inactive';
+                const promotedBadge = vehicle.promoted ? '<span style="background: #6f42c1; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 8px;">PROMOTED</span>' : '';
+                
+                html += `
+                    <div class="vehicle-card" style="${vehicle.promoted ? 'border: 2px solid #6f42c1; background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);' : ''}">
+                        <div class="vehicle-header">
+                            <div class="vehicle-title">${vehicle.category_name} - ${vehicle.brand_name} ${vehicle.model_name}${promotedBadge}</div>
+                            <div class="status-badge ${statusClass}">${statusText}</div>
+                        </div>
+                        
+                        <div class="vehicle-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Year:</span> ${vehicle.year}
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Per Hour:</span> ₹${vehicle.per_hour_price || 0}
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Per Day:</span> ₹${vehicle.per_day_price || 0}
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Pincode:</span> ${vehicle.pincode || 'Not set'}
+                            </div>
+                        </div>
+                        
+                        <div class="actions">
+                            <button class="btn btn-edit" onclick="editVehicle(${vehicle.id})">Edit</button>
+                            <button class="btn btn-toggle" onclick="toggleStatus(${vehicle.id})">${vehicle.available ? 'Deactivate' : 'Activate'}</button>
+                            <button class="btn btn-promote ${vehicle.promoted ? 'btn-promoted' : ''}" onclick="promoteVehicle(${vehicle.id})">${vehicle.promoted ? 'Promoted ✓' : 'Promote'}</button>
+                            <button class="btn btn-delete" onclick="deleteVehicle(${vehicle.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function updateStats(data) {
+            document.getElementById('total-vehicles').textContent = data.total || 0;
+            document.getElementById('active-vehicles').textContent = data.active || 0;
+            document.getElementById('total-clicks').textContent = data.vehicles ? data.vehicles.reduce((sum, v) => sum + (v.click_count || 0), 0) : 0;
+        }
+
+        function editVehicle(id) {
+            window.location.href = `/edit-vehicle/${id}/`;
+        }
+
+        function toggleStatus(id) {
+            fetch(`/toggle-vehicle-status/${id}/`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadVehicles();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+
+        function deleteVehicle(id) {
+            if (confirm('Are you sure you want to delete this vehicle?')) {
+                fetch(`/delete-vehicle/${id}/`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadVehicles();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+
+        function promoteVehicle(vehicleId) {
+            fetch('/api/get-promotion-plans/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.plans && data.plans.length > 0) {
+                    showPromoteModal(vehicleId, data.plans);
+                } else {
+                    alert('No promotion plans available. Please contact admin.');
+                }
+            })
+            .catch(error => {
+                alert('Error loading promotion plans');
+            });
+        }
+
+        function showPromoteModal(vehicleId, plans) {
+            let modalHtml = `
+                <div id="promote-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 15px; padding: 2rem; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h2 style="color: #6f42c1; margin: 0;">🚀 Promote Vehicle</h2>
+                            <button onclick="closePromoteModal()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                        </div>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">Available Plans:</label>
+                            <select id="plan-select" onchange="updateCalculation()" style="width: 100%; padding: 0.8rem; border: 2px solid #6f42c1; border-radius: 8px; font-size: 1rem;">
+                                <option value="">Select a plan</option>`;
+            
+            plans.forEach(plan => {
+                modalHtml += `<option value="${plan.duration_days},${plan.price_per_day}">${plan.duration_days} ${plan.duration_days == 1 ? 'Day' : 'Days'} - ₹${plan.price_per_day}/day</option>`;
+            });
+            
+            modalHtml += `
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">How many days?</label>
+                            <input type="number" id="days-input" min="1" value="1" onchange="updateCalculation()" style="width: 100%; padding: 0.8rem; border: 2px solid #6f42c1; border-radius: 8px; font-size: 1rem;">
+                        </div>
+                        
+                        <div id="calculation" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #6f42c1;">
+                            <p style="margin: 0; color: #333;">Select a plan to see calculation</p>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button onclick="confirmPromotion(${vehicleId})" class="btn" style="background: #6f42c1; color: white; padding: 1rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">Proceed to Payment</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function updateCalculation() {
+            const planSelect = document.getElementById('plan-select');
+            const daysInput = document.getElementById('days-input');
+            const calculation = document.getElementById('calculation');
+            
+            if (planSelect.value && daysInput.value) {
+                const [planDays, pricePerDay] = planSelect.value.split(',');
+                const selectedDays = parseInt(daysInput.value);
+                const totalAmount = selectedDays * parseInt(pricePerDay);
+                
+                calculation.innerHTML = `
+                    <p style="margin: 0 0 0.5rem 0; color: #333;"><strong>Plan:</strong> ${planDays} ${planDays == 1 ? 'Day' : 'Days'} - ₹${pricePerDay}/day</p>
+                    <p style="margin: 0 0 0.5rem 0; color: #333;"><strong>Selected Days:</strong> ${selectedDays}</p>
+                    <p style="margin: 0; color: #6f42c1; font-size: 1.2rem; font-weight: bold;"><strong>Total Amount: ₹${totalAmount}</strong></p>
+                `;
+            } else {
+                calculation.innerHTML = '<p style="margin: 0; color: #333;">Select a plan and enter days to see calculation</p>';
+            }
+        }
+
+        function confirmPromotion(vehicleId) {
+            const planSelect = document.getElementById('plan-select');
+            const daysInput = document.getElementById('days-input');
+            
+            if (!planSelect.value || !daysInput.value) {
+                alert('Please select a plan and enter number of days');
+                return;
+            }
+            
+            const [planDays, pricePerDay] = planSelect.value.split(',');
+            const selectedDays = parseInt(daysInput.value);
+            const totalAmount = selectedDays * parseInt(pricePerDay);
+            
+            showPaymentModal(vehicleId, selectedDays, pricePerDay, totalAmount);
+        }
+
+        function showPaymentModal(vehicleId, days, pricePerDay, totalAmount) {
+            closePromoteModal();
+            
+            const paymentModal = `
+                <div id="payment-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 15px; padding: 2rem; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h2 style="color: #6f42c1; margin: 0;">💳 Payment Options</h2>
+                            <button onclick="closePaymentModal()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                        </div>
+                        
+                        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; text-align: center;">
+                            <h3 style="color: #333; margin-bottom: 1rem;">Promotion Summary</h3>
+                            <p style="margin: 0.5rem 0; color: #666;"><strong>Duration:</strong> ${days} days</p>
+                            <p style="margin: 0.5rem 0; color: #666;"><strong>Rate:</strong> ₹${pricePerDay}/day</p>
+                            <p style="margin: 0.5rem 0; color: #6f42c1; font-size: 1.3rem; font-weight: bold;"><strong>Total Amount: ₹${totalAmount}</strong></p>
+                        </div>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <h4 style="color: #333; margin-bottom: 1rem; text-align: center;">Choose Payment Method</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <button onclick="payWithGPay(${vehicleId}, ${days}, ${pricePerDay}, ${totalAmount})" style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); color: white; border: none; padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.2rem;">💳</span> Google Pay
+                                </button>
+                                <button onclick="payWithPhonePe(${vehicleId}, ${days}, ${pricePerDay}, ${totalAmount})" style="background: linear-gradient(135deg, #5f259f 0%, #3d1a78 100%); color: white; border: none; padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.2rem;">📱</span> PhonePe
+                                </button>
+                                <button onclick="payWithPaytm(${vehicleId}, ${days}, ${pricePerDay}, ${totalAmount})" style="background: linear-gradient(135deg, #00baf2 0%, #0082c6 100%); color: white; border: none; padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.2rem;">💰</span> Paytm
+                                </button>
+                                <button onclick="payWithUPI(${vehicleId}, ${days}, ${pricePerDay}, ${totalAmount})" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; border: none; padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.2rem;">🏦</span> UPI
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #fff3cd; padding: 1rem; border-radius: 8px; border-left: 4px solid #ffc107;">
+                            <p style="margin: 0; color: #856404; font-size: 0.9rem;"><strong>Note:</strong> After payment, your vehicle will be promoted immediately and featured for ${days} days.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', paymentModal);
+        }
+
+        function payWithGPay(vehicleId, days, pricePerDay, totalAmount) {
+            const upiId = 'gowheels@paytm';
+            const merchantName = 'GoWheels';
+            const transactionNote = `Vehicle Promotion - ${days} days`;
+            
+            const gpayUrl = `tez://upi/pay?pa=${upiId}&pn=${merchantName}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+            const upiUrl = `upi://pay?pa=${upiId}&pn=${merchantName}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+            
+            showPaymentInstructions('Google Pay', gpayUrl, upiUrl, vehicleId, days, pricePerDay, totalAmount);
+        }
+
+        function payWithPhonePe(vehicleId, days, pricePerDay, totalAmount) {
+            const upiId = 'gowheels@paytm';
+            const merchantName = 'GoWheels';
+            const transactionNote = `Vehicle Promotion - ${days} days`;
+            
+            const phonepeUrl = `phonepe://pay?pa=${upiId}&pn=${merchantName}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+            const upiUrl = `upi://pay?pa=${upiId}&pn=${merchantName}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+            
+            showPaymentInstructions('PhonePe', phonepeUrl, upiUrl, vehicleId, days, pricePerDay, totalAmount);
+        }
+
+        function payWithPaytm(vehicleId, days, pricePerDay, totalAmount) {
+            const upiId = 'gowheels@paytm';
+            const merchantName = 'GoWheels';
+            const transactionNote = `Vehicle Promotion - ${days} days`;
+            
+            const paytmUrl = `paytmmp://pay?pa=${upiId}&pn=${merchantName}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+            const upiUrl = `upi://pay?pa=${upiId}&pn=${merchantName}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+            
+            showPaymentInstructions('Paytm', paytmUrl, upiUrl, vehicleId, days, pricePerDay, totalAmount);
+        }
+
+        function payWithUPI(vehicleId, days, pricePerDay, totalAmount) {
+            const upiId = 'gowheels@paytm';
+            const merchantName = 'GoWheels';
+            const transactionNote = `Vehicle Promotion - ${days} days`;
+            
+            const upiUrl = `upi://pay?pa=${upiId}&pn=${merchantName}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+            
+            showPaymentInstructions('UPI', upiUrl, upiUrl, vehicleId, days, pricePerDay, totalAmount);
+        }
+
+        function showPaymentInstructions(paymentMethod, primaryUrl, fallbackUrl, vehicleId, days, pricePerDay, totalAmount) {
+            closePaymentModal();
+            
+            const instructionsModal = `
+                <div id="instructions-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 15px; padding: 2rem; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <div style="text-align: center; margin-bottom: 2rem;">
+                            <h2 style="color: #6f42c1; margin-bottom: 1rem;">📱 ${paymentMethod} Payment</h2>
+                            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <p style="margin: 0; color: #333; font-weight: bold;">Amount: ₹${totalAmount}</p>
+                                <p style="margin: 0.5rem 0 0 0; color: #666;">UPI ID: gowheels@paytm</p>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-bottom: 2rem;">
+                            <button onclick="window.open('${primaryUrl}', '_blank')" style="background: #28a745; color: white; border: none; padding: 1rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600; margin-bottom: 1rem; width: 100%; font-size: 1.1rem;">Open ${paymentMethod} App</button>
+                            <p style="margin: 1rem 0; color: #666; font-size: 0.9rem;">or</p>
+                            <button onclick="window.open('${fallbackUrl}', '_blank')" style="background: #6c757d; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 500; width: 100%;">Use Any UPI App</button>
+                        </div>
+                        
+                        <div style="background: #d4edda; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #28a745;">
+                            <p style="margin: 0; color: #155724; font-size: 0.9rem;"><strong>After Payment:</strong></p>
+                            <p style="margin: 0.5rem 0 0 0; color: #155724; font-size: 0.9rem;">Click "Payment Completed" below to activate your promotion.</p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem;">
+                            <button onclick="closeInstructionsModal()" style="background: #6c757d; color: white; border: none; padding: 1rem; border-radius: 8px; cursor: pointer; flex: 1;">Cancel</button>
+                            <button onclick="confirmPaymentCompleted(${vehicleId}, ${days}, ${pricePerDay}, ${totalAmount})" style="background: #28a745; color: white; border: none; padding: 1rem; border-radius: 8px; cursor: pointer; flex: 2; font-weight: 600;">Payment Completed ✓</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', instructionsModal);
+        }
+
+        function confirmPaymentCompleted(vehicleId, days, pricePerDay, totalAmount) {
+            if (confirm(`Confirm that payment of ₹${totalAmount} is completed?\n\nYour vehicle will be promoted for ${days} days.`)) {
+                const formData = new FormData();
+                formData.append('days', days);
+                formData.append('price_per_day', pricePerDay);
+                formData.append('total_amount', totalAmount);
+                formData.append('payment_method', 'UPI');
+                formData.append('payment_status', 'completed');
+                
+                fetch(`/promote-vehicle/${vehicleId}/`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`🎉 Vehicle promoted successfully!\n\nDuration: ${days} days\nAmount: ₹${totalAmount}\n\nYour vehicle is now featured and will get priority visibility!`);
+                        closeInstructionsModal();
+                        loadVehicles();
+                    } else {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    alert('Error promoting vehicle');
+                });
+            }
+        }
+
+        function closePromoteModal() {
+            const modal = document.getElementById('promote-modal');
+            if (modal) modal.remove();
+        }
+
+        function closePaymentModal() {
+            const modal = document.getElementById('payment-modal');
+            if (modal) modal.remove();
+        }
+
+        function closeInstructionsModal() {
+            const modal = document.getElementById('instructions-modal');
+            if (modal) modal.remove();
+        }
+    </script>
+</body>
+</html>

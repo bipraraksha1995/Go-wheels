@@ -1,0 +1,19 @@
+-- Fix all created_at fields to have default values
+
+ALTER TABLE gowheels_pincodemapping 
+MODIFY COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE gowheels_otp 
+MODIFY COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE gowheels_admincategory 
+MODIFY COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE gowheels_adminbrand 
+MODIFY COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE gowheels_adminmodel 
+MODIFY COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE gowheels_admingroup 
+MODIFY COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;

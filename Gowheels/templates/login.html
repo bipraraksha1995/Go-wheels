@@ -263,6 +263,7 @@
                     <p>Enter your phone number to continue</p>
                     
                     <form id="phone-form">
+                        {% csrf_token %}
                         <div class="input-group">
                             <label for="phone">Phone Number</label>
                             <input type="tel" id="phone" placeholder="9876543210" required>
@@ -279,13 +280,14 @@
                     <p>Enter the 6-digit code sent to <span id="phone-display"></span></p>
                     
                     <form id="otp-form">
+                        {% csrf_token %}
                         <div class="otp-inputs">
-                            <input type="text" maxlength="1" class="otp-input">
-                            <input type="text" maxlength="1" class="otp-input">
-                            <input type="text" maxlength="1" class="otp-input">
-                            <input type="text" maxlength="1" class="otp-input">
-                            <input type="text" maxlength="1" class="otp-input">
-                            <input type="text" maxlength="1" class="otp-input">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
                         </div>
                         <button type="submit" class="btn-submit">Verify & Login</button>
                         <div class="login-options">
@@ -340,6 +342,23 @@
         </div>
     </div>
     
-    <script src="/static/js/login.js"></script>
+    <script>
+    (function(){
+        const ps=document.getElementById('phone-step'),os=document.getElementById('otp-step'),pf=document.getElementById('phone-form'),of=document.getElementById('otp-form'),pi=document.getElementById('phone'),pd=document.getElementById('phone-display'),oi=document.querySelectorAll('.otp-input');let cp='';
+        oi.forEach(i=>{i.value='';i.setAttribute('readonly','readonly');setTimeout(()=>i.removeAttribute('readonly'),100);});
+        
+        function gc(n){let c=null;if(document.cookie){document.cookie.split(';').forEach(ck=>{const t=ck.trim();if(t.startsWith(n+'='))c=decodeURIComponent(t.substring(n.length+1));});}return c;}
+        
+        function getCsrf(){const t=document.querySelector('[name=csrfmiddlewaretoken]');return t?t.value:gc('csrftoken');}
+        
+        pf.addEventListener('submit',e=>{e.preventDefault();cp=pi.value;if(cp.length===10){pd.textContent=cp;fetch('/send-otp/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({phone:cp})}).then(r=>r.json()).then(d=>{if(d.success){alert('OTP sent to mobile');oi.forEach(i=>i.value='');ss(os);}else alert(d.error||'Failed');}).catch(e=>{console.error(e);alert('Error sending OTP');});}else alert('Enter 10-digit phone');});
+        
+        of.addEventListener('submit',e=>{e.preventDefault();const o=Array.from(oi).map(i=>i.value).join('');if(o.length===6){fetch('/login/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':getCsrf()},body:`phone=${cp}&otp=${o}`}).then(r=>r.json()).then(d=>{if(d.success){alert('Login successful!');window.location.href='/user-dashboard/';}else alert(d.error||'Invalid OTP');}).catch(e=>{console.error(e);alert('Error verifying OTP');});}});
+        
+        oi.forEach((inp,idx)=>{inp.addEventListener('focus',()=>inp.value='');inp.addEventListener('input',function(){if(this.value.length===1&&idx<oi.length-1)oi[idx+1].focus();});inp.addEventListener('keydown',e=>{if(e.key==='Backspace'&&this.value===''&&idx>0)oi[idx-1].focus();});});
+        
+        function ss(s){document.querySelectorAll('.login-step').forEach(st=>st.classList.remove('active'));s.classList.add('active');}
+    })();
+    </script>
 </body>
 </html>
