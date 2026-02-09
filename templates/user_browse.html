@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse - GoWheels</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            color: #333;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .sponsor-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .sponsor-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: transform 0.3s;
+        }
+        .sponsor-link:hover {
+            transform: translateY(-3px);
+        }
+        .sponsors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .sponsor-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .sponsor-card:hover {
+            transform: translateY(-5px);
+        }
+        .sponsor-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        .sponsor-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .sponsor-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        .sponsor-badge {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚗 GoWheels - Browse Vehicles</h1>
+    </div>
+
+    <div class="container">
+        <div class="sponsor-section">
+            <h2 style="margin-bottom: 1rem;">📢 Become a Sponsor</h2>
+            <p style="margin-bottom: 1.5rem; color: #666;">Promote your brand to thousands of vehicle rental customers!</p>
+            <a href="/user-sponsor/" class="sponsor-link">Submit Sponsor Ad</a>
+        </div>
+
+        <div class="sponsor-section">
+            <h2 style="margin-bottom: 1rem;">🌟 Our Sponsors</h2>
+            <div id="sponsors-grid" class="sponsors-grid">
+                <p style="text-align: center; color: #666;">Loading sponsors...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadActiveSponsors();
+            showPromotedVehiclePopup();
+            showReferralPopup();
+        });
+
+        function showReferralPopup() {
+            // Check if user just logged in (show once per session)
+            if (sessionStorage.getItem('referralShown')) return;
+            
+            fetch('/api/referral-stats/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) return; // Not logged in
+                
+                // Get referral code
+                fetch('/referral/')
+                .then(r => r.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const code = doc.getElementById('referralCode')?.textContent || 'XXXXXX';
+                    
+                    showReferralPopupUI(code, data.total_referrals, data.total_rewards);
+                    sessionStorage.setItem('referralShown', 'true');
+                });
+            });
+        }
+
+        function showReferralPopupUI(code, totalReferrals, totalRewards) {
+            const popup = document.createElement('div');
+            popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:2rem;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,0.3);z-index:9999;max-width:400px;width:90%;';
+            popup.innerHTML = `
+                <div style="text-align:center;">
+                    <div style="font-size:48px;margin-bottom:1rem;">🎁</div>
+                    <h2 style="margin-bottom:1rem;color:#333;">Earn ₹50 Rewards!</h2>
+                    <p style="color:#666;margin-bottom:1.5rem;">Share your referral code with friends and both get ₹50 when they sign up!</p>
+                    
+                    <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:1rem;border-radius:10px;margin-bottom:1rem;">
+                        <div style="font-size:12px;opacity:0.9;margin-bottom:4px;">Your Referral Code</div>
+                        <div style="font-size:28px;font-weight:bold;letter-spacing:4px;">${code}</div>
+                    </div>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+                        <div style="background:#f9f9f9;padding:1rem;border-radius:8px;">
+                            <div style="font-size:24px;font-weight:bold;color:#667eea;">${totalReferrals}</div>
+                            <div style="font-size:12px;color:#666;">Referrals</div>
+                        </div>
+                        <div style="background:#f9f9f9;padding:1rem;border-radius:8px;">
+                            <div style="font-size:24px;font-weight:bold;color:#4CAF50;">₹${totalRewards}</div>
+                            <div style="font-size:12px;color:#666;">Earned</div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="window.open('https://wa.me/?text=Join GoWheels using my referral code ${code} and get ₹50 reward!')" style="background:#25D366;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;width:100%;margin-bottom:8px;">Share on WhatsApp</button>
+                    
+                    <button onclick="navigator.clipboard.writeText('${code}');alert('Code copied!')" style="background:#667eea;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;width:100%;margin-bottom:8px;">Copy Code</button>
+                    
+                    <button onclick="this.parentElement.parentElement.remove();document.getElementById('overlay2').remove()" style="background:#f5f5f5;color:#666;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;width:100%;">Maybe Later</button>
+                </div>
+            `;
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'overlay2';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9998;';
+            overlay.onclick = () => { popup.remove(); overlay.remove(); };
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+        }
+
+        function showPromotedVehiclePopup() {
+            fetch('/api/get-promoted-vehicles/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.vehicles && data.vehicles.length > 0) {
+                    const vehicle = data.vehicles[0];
+                    showPopup(vehicle);
+                }
+            });
+        }
+
+        function showPopup(vehicle) {
+            const popup = document.createElement('div');
+            popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:2rem;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,0.3);z-index:9999;max-width:500px;width:90%;';
+            popup.innerHTML = `
+                <div style="text-align:center;">
+                    <div style="background:linear-gradient(135deg,#ffc107,#ff9800);color:white;padding:0.5rem 1rem;border-radius:20px;display:inline-block;margin-bottom:1rem;font-weight:600;">🌟 PROMOTED</div>
+                    <h2 style="margin-bottom:1rem;color:#333;">${vehicle.brand} ${vehicle.model}</h2>
+                    <p style="color:#666;margin-bottom:1rem;">${vehicle.description || 'Premium vehicle available for rent'}</p>
+                    <p style="font-size:1.5rem;color:#667eea;font-weight:600;margin-bottom:1.5rem;">₹${vehicle.price_per_day}/day</p>
+                    <button onclick="this.parentElement.parentElement.remove();document.getElementById('overlay').remove()" style="background:#667eea;color:white;border:none;padding:0.8rem 2rem;border-radius:8px;cursor:pointer;font-size:1rem;font-weight:600;">View Details</button>
+                </div>
+            `;
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9998;';
+            overlay.onclick = () => { popup.remove(); overlay.remove(); };
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+        }
+
+        function loadActiveSponsors() {
+            fetch('/api/get-active-sponsors/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.sponsors) {
+                    displaySponsors(data.sponsors);
+                } else {
+                    document.getElementById('sponsors-grid').innerHTML = '<p style="text-align: center; color: #666;">No sponsors available at the moment.</p>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('sponsors-grid').innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading sponsors</p>';
+            });
+        }
+
+        function displaySponsors(sponsors) {
+            const container = document.getElementById('sponsors-grid');
+            
+            if (sponsors.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No sponsors available at the moment.</p>';
+                return;
+            }
+
+            let html = '';
+            sponsors.forEach(sponsor => {
+                html += `
+                    <div class="sponsor-card">
+                        <img src="/media/${sponsor.image}" alt="${sponsor.brand_name}" class="sponsor-image" onerror="this.style.display='none'">
+                        <div class="sponsor-name">${sponsor.brand_name}</div>
+                        <div class="sponsor-description">${sponsor.description || 'Premium brand partner'}</div>
+                        <div class="sponsor-badge">SPONSOR</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

@@ -1,10 +1,58 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from .models import Vehicle, UserProfile, BrandImage, ModelImage, VehicleImage, VehicleVideo
+from django.http import JsonResponse, HttpResponse
+from .models import Vehicle, UserProfile, BrandImage, ModelImage, VehicleImage, VehicleVideo, OTP
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Count
+from django.utils import timezone
+from datetime import timedelta
+from .otp_service import OTPService
 import json
+import random
+
+from .twofa_api import send_2fa_code, hash_otp
+from .crypto_utils import generate_otp as generate_secure_otp
+
+def create_otp(phone):
+    # Generate OTP using secure crypto function
+    otp = generate_secure_otp(6)
+    
+    print(f"\n{'='*60}")
+    print(f"🔐 OTP GENERATED FOR {phone}: {otp}")
+    print(f"{'='*60}\n")
+    
+    # Delete any existing OTPs for this phone
+    OTP.objects.filter(phone=phone).delete()
+    
+    # Hash the OTP before saving
+    otp_hash = hash_otp(otp)
+    
+    # Create new OTP with 5-minute expiry
+    OTP.objects.create(
+        phone=phone,
+        otp_hash=otp_hash,
+        expires_at=timezone.now() + timedelta(minutes=5),
+        attempts=0,
+        is_used=False
+    )
+    
+    # Send OTP via SMS (2Factor API)
+    send_2fa_code(phone, otp)
+    
+    print(f"\n{'='*60}")
+    print(f"✅ USE THIS OTP TO LOGIN: {otp}")
+    print(f"{'='*60}\n")
+    
+    return otp
+
+def send_otp_console(phone):
+    otp = create_otp(phone)
+    return otp
+
+def test_send_otp(request):
+    phone = "9999999999"  # test number
+    send_otp_console(phone)
+    return HttpResponse("OTP sent (check terminal)")
 
 # Try to import VehicleClick, handle if migration not run yet
 try:
@@ -46,9 +94,14 @@ def register_view(request):
             phone = request.POST.get('phone')
             name = request.POST.get('name')
             pincode = request.POST.get('pincode')
+            referral_code = request.POST.get('referral_code', '').strip().upper()
             
             # Check if phone already exists
             if UserProfile.objects.filter(phone=phone).exists():
+                return JsonResponse({'success': False, 'error': 'Phone number already registered'})
+            
+            # Check if username (phone) already exists
+            if User.objects.filter(username=phone).exists():
                 return JsonResponse({'success': False, 'error': 'Phone number already registered'})
             
             # Create user
@@ -64,12 +117,25 @@ def register_view(request):
                 pincode=pincode
             )
             
+            # Apply referral code if provided
+            if referral_code:
+                from .models import Referral
+                referral = Referral.objects.filter(referral_code=referral_code, referred_phone='').first()
+                if referral:
+                    Referral.objects.create(
+                        referrer_phone=referral.referrer_phone,
+                        referral_code=referral_code + '_USED',
+                        referred_phone=phone,
+                        reward_amount=50
+                    )
+            
             return JsonResponse({'success': True, 'message': 'Registration successful'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     
     return render(request, 'register.html')
 
+@csrf_exempt
 def login_view(request):
     if request.method == 'POST':
         try:
@@ -85,8 +151,10 @@ def login_view(request):
                 if user_profile.blocked:
                     return JsonResponse({'success': False, 'error': 'Your account has been blocked. Please contact support.'})
                 
-                # Simple OTP verification (in production, use proper OTP service)
-                if otp == '123456':  # Demo OTP
+                # Verify OTP from database using hash
+                from .twofa_api import verify_2fa_code
+                
+                if verify_2fa_code(phone, otp):
                     # Login successful
                     request.session['user_id'] = user.id
                     request.session['phone'] = phone
@@ -97,7 +165,7 @@ def login_view(request):
                         'unique_id': user_profile.unique_id
                     })
                 else:
-                    return JsonResponse({'success': False, 'error': 'Invalid OTP'})
+                    return JsonResponse({'success': False, 'error': 'Invalid or expired OTP'})
                     
             except UserProfile.DoesNotExist:
                 return JsonResponse({'success': False, 'error': 'Phone number not registered'})
@@ -123,14 +191,24 @@ def super_admin_login(request):
             if phone not in authorized_phones:
                 return JsonResponse({'success': False, 'error': 'Unauthorized phone number'})
             
-            # Simple OTP verification (in production, use proper OTP service)
-            if otp == '123456':  # Super Admin OTP
-                # Login successful
+            # Check for default OTP from .env
+            from decouple import config
+            default_otp = config('SUPER_ADMIN_OTP', default='123456')
+            
+            # Accept default OTP without generating/sending
+            if otp == default_otp:
+                request.session['super_admin_logged_in'] = True
+                request.session['super_admin_phone'] = phone
+                return JsonResponse({'success': True, 'message': 'Super Admin login successful'})
+            
+            # Fallback to regular OTP verification
+            from .twofa_api import verify_2fa_code
+            if verify_2fa_code(phone, otp):
                 request.session['super_admin_logged_in'] = True
                 request.session['super_admin_phone'] = phone
                 return JsonResponse({'success': True, 'message': 'Super Admin login successful'})
             else:
-                return JsonResponse({'success': False, 'error': 'Invalid OTP'})
+                return JsonResponse({'success': False, 'error': 'Invalid or expired OTP'})
                 
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
@@ -142,7 +220,7 @@ def super_admin_panel(request):
     if not request.session.get('super_admin_logged_in'):
         return redirect('/super-admin-login/')
     
-    # Redirect to category management page
+    # Redirect to category management page (original UI)
     return redirect('/super-admin-categories/')
 
 def add_vehicle(request):
@@ -559,9 +637,10 @@ def get_vehicles(request):
         brand_name = str(request.GET.get('br', '')) 
         model_name = str(request.GET.get('mod', ''))
         pincode = str(request.GET.get('pincode', ''))
-        distance_km = int(request.GET.get('distance', 25))  # Default 25km radius
+        listing_type = str(request.GET.get('listing_type', 'rent'))
+        distance_km = int(request.GET.get('distance', 25))
         
-        vehicles = Vehicle.objects.filter(available=True, approval_status='approved')
+        vehicles = Vehicle.objects.filter(available=True, approval_status='approved', listing_type=listing_type)
         
         if category_name:
             vehicles = vehicles.filter(category_name__iexact=category_name)
@@ -570,14 +649,18 @@ def get_vehicles(request):
         if model_name:
             vehicles = vehicles.filter(model_name__iexact=model_name)
         if pincode:
-            # Facebook Marketplace style - distance-based mapping
+            # Chennai pincode-based mapping (600001-600120)
             try:
                 base_pincode = int(pincode)
-                # Calculate pincode range based on distance (approx 1km = 1 pincode unit)
-                range_size = distance_km
-                
-                min_pincode = base_pincode - range_size
-                max_pincode = base_pincode + range_size
+                # For Chennai pincodes (600xxx), show vehicles within +/- 10 pincode range
+                if 600001 <= base_pincode <= 600120:
+                    min_pincode = max(600001, base_pincode - 10)
+                    max_pincode = min(600120, base_pincode + 10)
+                else:
+                    # For other areas, use distance-based range
+                    range_size = distance_km
+                    min_pincode = base_pincode - range_size
+                    max_pincode = base_pincode + range_size
                 
                 vehicles = vehicles.filter(
                     pincode__gte=str(min_pincode),
@@ -612,13 +695,17 @@ def get_vehicles(request):
                     'per_day_price': str(vehicle.per_day_price or 0),
                     'per_hour_price': str(vehicle.per_hour_price or 0),
                     'pricing_type': str(vehicle.pricing_type),
+                    'listing_type': str(vehicle.listing_type),
                     'unit_type': str(vehicle.unit_type or 'unit_price'),
-                    'seller_phone': str(vehicle.seller_phone or ''),
+                    'seller_phone': str(vehicle.get_seller_phone() or ''),
                     'pincode': str(vehicle.pincode or ''),
                     'village': str(vehicle.village or ''),
-                    'owner_name': str(vehicle.owner_name or ''),
+                    'owner_name': str(vehicle.get_owner_name() or ''),
                     'distance_km': distance,
                     'location': f"{vehicle.village or ''}, {vehicle.pincode}".strip(', '),
+                    'manual_maintenance_cost': str(vehicle.manual_maintenance_cost or ''),
+                    'manual_fuel_cost': str(vehicle.manual_fuel_cost or ''),
+                    'manual_insurance_cost': str(vehicle.manual_insurance_cost or ''),
                     'images': vehicle_images
                 })
             except:
@@ -682,6 +769,112 @@ def create_state_admin(request):
 
 def state_admin(request):
     return render(request, 'state_admin.html')
+
+# Hierarchical Navigation Views
+def browse_groups(request):
+    from .models import AdminGroup
+    groups = AdminGroup.objects.all()
+    # Only show groups that have categories
+    groups_with_categories = [group for group in groups if group.categories.exists()]
+    return render(request, 'browse_groups.html', {'groups': groups_with_categories})
+
+def browse_categories(request, group_id):
+    from .models import AdminGroup
+    group = AdminGroup.objects.get(id=group_id)
+    categories = group.categories.all()
+    return render(request, 'browse_categories.html', {'group': group, 'categories': categories})
+
+def browse_brands(request, category_id):
+    from .models import AdminCategory
+    category = AdminCategory.objects.get(id=category_id)
+    brands = category.brands.all()
+    return render(request, 'browse_brands.html', {'category': category, 'brands': brands})
+
+def browse_models(request, brand_id):
+    from .models import AdminBrand
+    brand = AdminBrand.objects.get(id=brand_id)
+    models = brand.models.all()
+    return render(request, 'browse_models.html', {'brand': brand, 'models': models})
+
+# Super Admin Management Views
+def super_admin_dashboard(request):
+    if not request.session.get('super_admin_logged_in'):
+        return redirect('/super-admin-login/')
+    
+    # Get statistics
+    total_vehicles = Vehicle.objects.count()
+    promoted_count = Vehicle.objects.filter(promoted=True).count()
+    sponsored_count = Vehicle.objects.filter(sponsored=True).count()
+    total_users = UserProfile.objects.count()
+    
+    return render(request, 'super_admin_dashboard.html', {
+        'total_vehicles': total_vehicles,
+        'promoted_count': promoted_count,
+        'sponsored_count': sponsored_count,
+        'total_users': total_users
+    })
+
+def manage_groups(request):
+    if not request.session.get('super_admin_logged_in'):
+        return redirect('/super-admin-login/')
+    
+    if request.method == 'POST':
+        from .models import AdminGroup
+        name = request.POST.get('name')
+        AdminGroup.objects.create(name=name)
+        return JsonResponse({'success': True})
+    
+    from .models import AdminGroup
+    groups = AdminGroup.objects.all()
+    return render(request, 'manage_groups.html', {'groups': groups})
+
+def manage_categories(request, group_id):
+    if not request.session.get('super_admin_logged_in'):
+        return redirect('/super-admin-login/')
+    
+    from .models import AdminGroup, AdminCategory
+    group = AdminGroup.objects.get(id=group_id)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        image = request.FILES.get('image')
+        AdminCategory.objects.create(name=name, image=image, group=group)
+        return JsonResponse({'success': True})
+    
+    categories = group.categories.all()
+    return render(request, 'manage_categories.html', {'group': group, 'categories': categories})
+
+def manage_brands(request, category_id):
+    if not request.session.get('super_admin_logged_in'):
+        return redirect('/super-admin-login/')
+    
+    from .models import AdminCategory, AdminBrand
+    category = AdminCategory.objects.get(id=category_id)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        image = request.FILES.get('image')
+        AdminBrand.objects.create(name=name, image=image, category=category)
+        return JsonResponse({'success': True})
+    
+    brands = category.brands.all()
+    return render(request, 'manage_brands.html', {'category': category, 'brands': brands})
+
+def manage_models(request, brand_id):
+    if not request.session.get('super_admin_logged_in'):
+        return redirect('/super-admin-login/')
+    
+    from .models import AdminBrand, AdminModel
+    brand = AdminBrand.objects.get(id=brand_id)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        image = request.FILES.get('image')
+        AdminModel.objects.create(name=name, image=image, brand=brand)
+        return JsonResponse({'success': True})
+    
+    models = brand.models.all()
+    return render(request, 'manage_models.html', {'brand': brand, 'models': models})
 
 def state_admin_panel(request):
     # Get state admin vehicle statistics
@@ -947,8 +1140,10 @@ def seller_dashboard_form(request):
             
             hourly_price = request.POST.get('hourly_price', '').strip()
             daily_price = request.POST.get('daily_price', '').strip()
+            sell_price = request.POST.get('sell_price', '').strip()
             unit_value = request.POST.get('unit_value', '').strip()
             year_str = request.POST.get('year', '').strip()
+            listing_type = str(request.POST.get('listing_type', 'rent'))
             
             # Validate year field
             if not year_str or year_str == '':
@@ -959,30 +1154,42 @@ def seller_dashboard_form(request):
             except ValueError:
                 return JsonResponse({'success': False, 'error': 'Invalid year format'})
             
-            # Set default price based on what's provided
+            # Set default price based on listing type
             price = 0
             pricing_type = 'per-hour'
             
-            if hourly_price and hourly_price != '':
-                try:
-                    price = float(hourly_price)
-                    pricing_type = 'per-hour'
-                except ValueError:
-                    return JsonResponse({'success': False, 'error': 'Invalid hourly price format'})
-            elif daily_price and daily_price != '':
-                try:
-                    price = float(daily_price)
-                    pricing_type = 'per-day'
-                except ValueError:
-                    return JsonResponse({'success': False, 'error': 'Invalid daily price format'})
-            elif unit_value and unit_value != '':
-                try:
-                    price = float(unit_value)
-                    pricing_type = 'per-hour'  # Default
-                except ValueError:
-                    return JsonResponse({'success': False, 'error': 'Invalid unit price format'})
+            if listing_type == 'sell':
+                # For sell listings, use sell_price
+                if sell_price and sell_price != '':
+                    try:
+                        price = float(sell_price)
+                        pricing_type = 'per-day'  # Store sell price in per_day_price field
+                    except ValueError:
+                        return JsonResponse({'success': False, 'error': 'Invalid selling price format'})
+                else:
+                    return JsonResponse({'success': False, 'error': 'Selling price is required for sell listings'})
             else:
-                return JsonResponse({'success': False, 'error': 'At least one price field is required'})
+                # For rent listings
+                if hourly_price and hourly_price != '':
+                    try:
+                        price = float(hourly_price)
+                        pricing_type = 'per-hour'
+                    except ValueError:
+                        return JsonResponse({'success': False, 'error': 'Invalid hourly price format'})
+                elif daily_price and daily_price != '':
+                    try:
+                        price = float(daily_price)
+                        pricing_type = 'per-day'
+                    except ValueError:
+                        return JsonResponse({'success': False, 'error': 'Invalid daily price format'})
+                elif unit_value and unit_value != '':
+                    try:
+                        price = float(unit_value)
+                        pricing_type = 'per-hour'  # Default
+                    except ValueError:
+                        return JsonResponse({'success': False, 'error': 'Invalid unit price format'})
+                else:
+                    return JsonResponse({'success': False, 'error': 'At least one price field is required'})
             
             vehicle = Vehicle(
                 category_name=category,
@@ -993,6 +1200,7 @@ def seller_dashboard_form(request):
                 price=price,
                 pricing_type=pricing_type,
                 unit_type=str(request.POST.get('unit_type', 'unit_price')),
+                listing_type=str(request.POST.get('listing_type', 'rent')),
                 seller_phone=str(request.session.get('phone', '')),
                 pincode=str(request.POST.get('pincode', '')),
                 village=str(request.POST.get('village', '')),
@@ -1002,20 +1210,62 @@ def seller_dashboard_form(request):
                 available=True
             )
             
-            # Set per hour and per day prices
-            if hourly_price and hourly_price != '':
-                vehicle.per_hour_price = float(hourly_price)
-                vehicle.hourly_start_range = float(hourly_price)
-                vehicle.hourly_end_range = float(hourly_price)
-            else:
+            # Save manual cost prediction values if provided
+            maintenance = request.POST.get('maintenance_cost', '').strip()
+            fuel = request.POST.get('fuel_cost', '').strip()
+            insurance = request.POST.get('insurance_cost', '').strip()
+            
+            if maintenance:
+                try:
+                    vehicle.manual_maintenance_cost = float(maintenance)
+                except ValueError:
+                    pass
+            
+            if fuel:
+                try:
+                    vehicle.manual_fuel_cost = float(fuel)
+                except ValueError:
+                    pass
+            
+            if insurance:
+                try:
+                    vehicle.manual_insurance_cost = float(insurance)
+                except ValueError:
+                    pass
+            
+            # Set per hour and per day prices based on listing type
+            if listing_type == 'sell':
+                # For sell listings, store price in per_day_price
+                vehicle.per_day_price = price
+                vehicle.daily_start_range = price
+                vehicle.daily_end_range = price
                 vehicle.per_hour_price = 0
-                
-            if daily_price and daily_price != '':
-                vehicle.per_day_price = float(daily_price)
-                vehicle.daily_start_range = float(daily_price)
-                vehicle.daily_end_range = float(daily_price)
             else:
-                vehicle.per_day_price = 0
+                # For rent listings
+                if hourly_price and hourly_price != '':
+                    vehicle.per_hour_price = float(hourly_price)
+                    vehicle.hourly_start_range = float(hourly_price)
+                    vehicle.hourly_end_range = float(hourly_price)
+                else:
+                    vehicle.per_hour_price = 0
+                    
+                if daily_price and daily_price != '':
+                    vehicle.per_day_price = float(daily_price)
+                    vehicle.daily_start_range = float(daily_price)
+                    vehicle.daily_end_range = float(daily_price)
+                else:
+                    vehicle.per_day_price = 0
+            
+            # Handle unit price if provided
+            if unit_value and unit_value != '':
+                try:
+                    unit_price = float(unit_value)
+                    if listing_type == 'rent':
+                        vehicle.per_hour_price = unit_price
+                        vehicle.hourly_start_range = unit_price
+                        vehicle.hourly_end_range = unit_price
+                except ValueError:
+                    pass
             
             vehicle.save()
             
@@ -1096,16 +1346,28 @@ def get_seller_vehicles(request):
     try:
         user_phone = request.session.get('phone', '')
         
+        if not user_phone:
+            return JsonResponse({'error': 'Not authenticated - no phone in session', 'vehicles': [], 'total': 0, 'active': 0})
+        
+        # Debug: Check what vehicles exist for this phone
+        all_vehicles = Vehicle.objects.filter(seller_phone=user_phone)
+        print(f"Debug: Looking for vehicles with seller_phone='{user_phone}'")
+        print(f"Debug: Found {all_vehicles.count()} vehicles")
+        
+        # Also check vehicles added by 'seller' regardless of phone
+        seller_vehicles = Vehicle.objects.filter(added_by='seller')
+        print(f"Debug: Total seller vehicles in database: {seller_vehicles.count()}")
+        
         # Get all vehicles for current seller (approved, pending, rejected)
         if VEHICLE_CLICK_AVAILABLE:
             vehicles = Vehicle.objects.filter(
-                seller_phone=user_phone
+                Q(seller_phone=user_phone) | Q(added_by='seller')
             ).annotate(
                 click_count=Count('clicks')
             ).order_by('-id')
         else:
             vehicles = Vehicle.objects.filter(
-                seller_phone=user_phone
+                Q(seller_phone=user_phone) | Q(added_by='seller')
             ).order_by('-id')
         
         total_count = vehicles.count()
@@ -1128,13 +1390,15 @@ def get_seller_vehicles(request):
                 'state': vehicle.state,
                 'price': str(vehicle.price),
                 'pricing_type': vehicle.pricing_type,
-                'per_hour_price': str(vehicle.per_hour_price),
-                'per_day_price': str(vehicle.per_day_price),
+                'per_hour_price': str(vehicle.per_hour_price or 0),
+                'per_day_price': str(vehicle.per_day_price or 0),
+                'listing_type': vehicle.listing_type,
                 'pincode': vehicle.pincode or '',
                 'village': vehicle.village or '',
                 'owner_name': vehicle.owner_name or '',
                 'available': vehicle.available,
                 'approval_status': vehicle.approval_status,
+                'promoted': getattr(vehicle, 'promoted', False),
                 'click_count': 0,
                 'recent_clicks': [],
                 'images': vehicle_images,
@@ -1158,10 +1422,12 @@ def get_seller_vehicles(request):
         return JsonResponse({
             'vehicles': vehicles_data,
             'total': total_count,
-            'active': active_count
+            'active': active_count,
+            'debug_phone': user_phone,
+            'debug_total_found': total_count
         })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': str(e), 'vehicles': [], 'total': 0, 'active': 0}, status=500)
 
 def toggle_vehicle_status(request, vehicle_id):
     if request.method == 'POST':
@@ -1597,11 +1863,13 @@ def save_admin_data(request):
                 # Check if group already exists
                 if AdminGroup.objects.filter(name=name).exists():
                     return JsonResponse({'success': False, 'error': 'Group name already exists'})
-                AdminGroup.objects.get_or_create(name=name)
+                AdminGroup.objects.create(name=name)
                 return JsonResponse({'success': True})
                 
             elif data_type == 'category':
                 group, created = AdminGroup.objects.get_or_create(name=group_name)
+                if AdminCategory.objects.filter(name=name, group=group).exists():
+                    return JsonResponse({'success': False, 'error': 'Category already exists in this group'})
                 AdminCategory.objects.create(
                     name=name,
                     image=image,
@@ -1610,25 +1878,35 @@ def save_admin_data(request):
                 return JsonResponse({'success': True})
                 
             elif data_type == 'brand':
-                group = AdminGroup.objects.get(name=group_name)
-                category = AdminCategory.objects.get(name=category_name, group=group)
-                AdminBrand.objects.create(
-                    name=name,
-                    image=image,
-                    category=category
-                )
-                return JsonResponse({'success': True})
+                try:
+                    group = AdminGroup.objects.get(name=group_name)
+                    category = AdminCategory.objects.get(name=category_name, group=group)
+                    if AdminBrand.objects.filter(name=name, category=category).exists():
+                        return JsonResponse({'success': False, 'error': 'Brand already exists in this category'})
+                    AdminBrand.objects.create(
+                        name=name,
+                        image=image,
+                        category=category
+                    )
+                    return JsonResponse({'success': True})
+                except (AdminGroup.DoesNotExist, AdminCategory.DoesNotExist):
+                    return JsonResponse({'success': False, 'error': 'Group or Category not found'})
                 
             elif data_type == 'model':
-                group = AdminGroup.objects.get(name=group_name)
-                category = AdminCategory.objects.get(name=category_name, group=group)
-                brand = AdminBrand.objects.get(name=brand_name, category=category)
-                AdminModel.objects.create(
-                    name=name,
-                    image=image,
-                    brand=brand
-                )
-                return JsonResponse({'success': True})
+                try:
+                    group = AdminGroup.objects.get(name=group_name)
+                    category = AdminCategory.objects.get(name=category_name, group=group)
+                    brand = AdminBrand.objects.get(name=brand_name, category=category)
+                    if AdminModel.objects.filter(name=name, brand=brand).exists():
+                        return JsonResponse({'success': False, 'error': 'Model already exists for this brand'})
+                    AdminModel.objects.create(
+                        name=name,
+                        image=image,
+                        brand=brand
+                    )
+                    return JsonResponse({'success': True})
+                except (AdminGroup.DoesNotExist, AdminCategory.DoesNotExist, AdminBrand.DoesNotExist):
+                    return JsonResponse({'success': False, 'error': 'Group, Category or Brand not found'})
                 
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
@@ -1649,10 +1927,13 @@ def get_all_admin_data(request):
     try:
         from .models import AdminGroup, AdminCategory, AdminBrand, AdminModel
         
-        # Get all groups first
+        # Get all groups with their hierarchical data
         all_groups = AdminGroup.objects.all()
         
         categories = {}
+        brands = {}
+        models = {}
+        
         for group in all_groups:
             categories[group.name] = []
             # Get categories for this group
@@ -1662,26 +1943,28 @@ def get_all_admin_data(request):
                     'name': category.name,
                     'image': f'/media/{category.image}' if category.image else ''
                 })
-        
-        brands = {}
-        for brand in AdminBrand.objects.all():
-            key = f"{brand.category.group.name}_{brand.category.name}"
-            if key not in brands:
-                brands[key] = []
-            brands[key].append({
-                'name': brand.name,
-                'image': f'/media/{brand.image}' if brand.image else ''
-            })
-        
-        models = {}
-        for model in AdminModel.objects.all():
-            key = f"{model.brand.category.group.name}_{model.brand.category.name}_{model.brand.name}"
-            if key not in models:
-                models[key] = []
-            models[key].append({
-                'name': model.name,
-                'image': f'/media/{model.image}' if model.image else ''
-            })
+                
+                # Get brands for this category
+                category_brands = AdminBrand.objects.filter(category=category)
+                brand_key = f"{group.name}_{category.name}"
+                brands[brand_key] = []
+                
+                for brand in category_brands:
+                    brands[brand_key].append({
+                        'name': brand.name,
+                        'image': f'/media/{brand.image}' if brand.image else ''
+                    })
+                    
+                    # Get models for this brand
+                    brand_models = AdminModel.objects.filter(brand=brand)
+                    model_key = f"{group.name}_{category.name}_{brand.name}"
+                    models[model_key] = []
+                    
+                    for model in brand_models:
+                        models[model_key].append({
+                            'name': model.name,
+                            'image': f'/media/{model.image}' if model.image else ''
+                        })
         
         return JsonResponse({
             'success': True,
@@ -1719,7 +2002,7 @@ def get_all_users_api(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 def seller_vehicles(request):
-    return render(request, 'seller_vehicles.html')
+    return render(request, 'seller_vehicles_new.html')
 
 @csrf_exempt
 def get_user_details_api(request, user_id):
@@ -1865,6 +2148,23 @@ def delete_admin_model(request):
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
+@csrf_exempt
+def delete_admin_group(request):
+    if request.method == 'POST':
+        try:
+            if not request.session.get('super_admin_logged_in'):
+                return JsonResponse({'success': False, 'error': 'Unauthorized'})
+            
+            from .models import AdminGroup
+            
+            group_name = request.POST.get('group_name')
+            AdminGroup.objects.filter(name=group_name).delete()
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
 def block_user(request, user_id):
     if request.method == 'POST':
         try:
@@ -1883,3 +2183,374 @@ def block_user(request, user_id):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def admin_ads_list(request):
+    search = request.GET.get('search', '')
+    vehicles = Vehicle.objects.all()
+    
+    if search:
+        vehicles = vehicles.filter(
+            Q(brand_name__icontains=search) |
+            Q(model_name__icontains=search) |
+            Q(category_name__icontains=search)
+        )
+    
+    return render(request, 'admin/ads_list.html', {'vehicles': vehicles, 'search': search})
+
+@csrf_exempt
+def toggle_promote(request, vehicle_id):
+    from django.shortcuts import get_object_or_404
+    vehicle = get_object_or_404(Vehicle, id=vehicle_id)
+    vehicle.promoted = not vehicle.promoted
+    vehicle.save()
+    return JsonResponse({'promoted': vehicle.promoted})
+
+@csrf_exempt
+def toggle_sponsor(request, vehicle_id):
+    from django.shortcuts import get_object_or_404
+    vehicle = get_object_or_404(Vehicle, id=vehicle_id)
+    vehicle.sponsored = not vehicle.sponsored
+    vehicle.save()
+    return JsonResponse({'sponsored': vehicle.sponsored})
+
+@csrf_exempt
+def seller_promote_vehicle(request, vehicle_id):
+    if request.method == 'POST':
+        try:
+            user_phone = request.session.get('phone')
+            if not user_phone:
+                return JsonResponse({'success': False, 'error': 'Not authenticated'})
+            
+            vehicle = Vehicle.objects.get(id=vehicle_id, seller_phone=user_phone)
+            vehicle.promoted = not vehicle.promoted
+            vehicle.save()
+            return JsonResponse({'success': True, 'promoted': vehicle.promoted})
+        except Vehicle.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Vehicle not found or not authorized'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def get_promotion_prices(request):
+    return JsonResponse({
+        'promote_price': 50,  # ₹50 per day
+        'sponsor_price': 100  # ₹100 per day
+    })
+
+@csrf_exempt
+def promote_vehicle(request, vehicle_id):
+    if request.method == 'POST':
+        try:
+            user_phone = request.session.get('phone')
+            if not user_phone:
+                return JsonResponse({'success': False, 'error': 'Not authenticated'})
+            
+            days = int(request.POST.get('days', 1))
+            price_per_day = float(request.POST.get('price_per_day', 50))
+            total_amount = float(request.POST.get('total_amount', days * price_per_day))
+            
+            vehicle = Vehicle.objects.get(id=vehicle_id, seller_phone=user_phone)
+            vehicle.promoted = True
+            vehicle.save()
+            
+            # Store promotion details (you can create a VehiclePromotion model later)
+            promotion_data = {
+                'vehicle_id': vehicle_id,
+                'days': days,
+                'price_per_day': price_per_day,
+                'total_amount': total_amount,
+                'start_date': str(timezone.now()),
+                'end_date': str(timezone.now() + timezone.timedelta(days=days))
+            }
+            
+            return JsonResponse({
+                'success': True, 
+                'message': f'Vehicle promoted for {days} days. Amount: ₹{total_amount}',
+                'promotion': promotion_data
+            })
+            
+        except Vehicle.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Vehicle not found'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def create_promotion(request):
+    if request.method == 'POST':
+        try:
+            if not request.session.get('super_admin_logged_in'):
+                return JsonResponse({'success': False, 'error': 'Unauthorized'})
+            
+            duration_days = int(request.POST.get('duration_days', 1))
+            price_per_day = float(request.POST.get('price_per_day', 50))
+            created_by = request.POST.get('created_by', 'super_admin')
+            status = request.POST.get('status', 'active')
+            
+            # Store in session for now (you can create PromotionPlan model later)
+            if 'promotion_plans' not in request.session:
+                request.session['promotion_plans'] = []
+            
+            plan = {
+                'id': len(request.session['promotion_plans']) + 1,
+                'duration_days': duration_days,
+                'price_per_day': price_per_day,
+                'created_by': created_by,
+                'status': status,
+                'created_at': str(timezone.now())
+            }
+            
+            request.session['promotion_plans'].append(plan)
+            request.session.modified = True
+            
+            return JsonResponse({
+                'success': True, 
+                'message': f'Promotion plan created successfully',
+                'plan': plan
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def get_promotion_plans(request):
+    try:
+        plans = request.session.get('promotion_plans', [])
+        active_plans = [plan for plan in plans if plan.get('status') == 'active']
+        return JsonResponse({'success': True, 'plans': active_plans})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+def submit_sponsor(request):
+    if request.method == 'POST':
+        try:
+            brand_name = request.POST.get('brand_name', '').strip()
+            description = request.POST.get('description', '').strip()
+            contact = request.POST.get('contact', '').strip()
+            brand_image = request.FILES.get('brand_image')
+            
+            if not brand_name or not brand_image:
+                return JsonResponse({'success': False, 'error': 'Brand name and image are required'})
+            
+            # Store in session for now (you can create SponsorAd model later)
+            if 'sponsor_ads' not in request.session:
+                request.session['sponsor_ads'] = []
+            
+            # Save image temporarily (in production, save to media folder)
+            import os
+            from django.conf import settings
+            
+            # Create sponsors directory if it doesn't exist
+            sponsors_dir = os.path.join(settings.MEDIA_ROOT, 'sponsors')
+            os.makedirs(sponsors_dir, exist_ok=True)
+            
+            # Save image
+            image_name = f"sponsor_{len(request.session['sponsor_ads']) + 1}_{brand_image.name}"
+            image_path = os.path.join(sponsors_dir, image_name)
+            
+            with open(image_path, 'wb+') as destination:
+                for chunk in brand_image.chunks():
+                    destination.write(chunk)
+            
+            sponsor = {
+                'id': len(request.session['sponsor_ads']) + 1,
+                'brand_name': brand_name,
+                'description': description,
+                'contact': contact,
+                'image': f'sponsors/{image_name}',
+                'status': 'pending',
+                'active': False,
+                'submitted_at': str(timezone.now())
+            }
+            
+            request.session['sponsor_ads'].append(sponsor)
+            request.session.modified = True
+            
+            return JsonResponse({'success': True, 'message': 'Sponsor ad submitted successfully'})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def get_sponsor_ads(request):
+    try:
+        if not request.session.get('super_admin_logged_in'):
+            return JsonResponse({'success': False, 'error': 'Unauthorized'})
+        
+        sponsors = request.session.get('sponsor_ads', [])
+        pending = [s for s in sponsors if s.get('status') == 'pending']
+        approved = [s for s in sponsors if s.get('status') == 'approved']
+        
+        return JsonResponse({
+            'success': True,
+            'pending': pending,
+            'approved': approved
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+def approve_sponsor(request, sponsor_id):
+    if request.method == 'POST':
+        try:
+            if not request.session.get('super_admin_logged_in'):
+                return JsonResponse({'success': False, 'error': 'Unauthorized'})
+            
+            payment_received = request.POST.get('payment_received', 'false').lower() == 'true'
+            
+            sponsors = request.session.get('sponsor_ads', [])
+            for sponsor in sponsors:
+                if sponsor['id'] == sponsor_id:
+                    sponsor['status'] = 'approved'
+                    sponsor['active'] = True
+                    sponsor['payment_received'] = payment_received
+                    sponsor['approved_at'] = str(timezone.now())
+                    break
+            
+            request.session['sponsor_ads'] = sponsors
+            request.session.modified = True
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def reject_sponsor(request, sponsor_id):
+    if request.method == 'POST':
+        try:
+            if not request.session.get('super_admin_logged_in'):
+                return JsonResponse({'success': False, 'error': 'Unauthorized'})
+            
+            sponsors = request.session.get('sponsor_ads', [])
+            request.session['sponsor_ads'] = [s for s in sponsors if s['id'] != sponsor_id]
+            request.session.modified = True
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def toggle_sponsor_status(request, sponsor_id):
+    if request.method == 'POST':
+        try:
+            if not request.session.get('super_admin_logged_in'):
+                return JsonResponse({'success': False, 'error': 'Unauthorized'})
+            
+            sponsors = request.session.get('sponsor_ads', [])
+            for sponsor in sponsors:
+                if sponsor['id'] == sponsor_id:
+                    sponsor['active'] = not sponsor.get('active', False)
+                    break
+            
+            request.session['sponsor_ads'] = sponsors
+            request.session.modified = True
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def delete_sponsor(request, sponsor_id):
+    if request.method == 'POST':
+        try:
+            if not request.session.get('super_admin_logged_in'):
+                return JsonResponse({'success': False, 'error': 'Unauthorized'})
+            
+            sponsors = request.session.get('sponsor_ads', [])
+            request.session['sponsor_ads'] = [s for s in sponsors if s['id'] != sponsor_id]
+            request.session.modified = True
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+def user_sponsor(request):
+    return render(request, 'user_sponsor.html')
+
+@csrf_exempt
+def send_otp(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            phone = data.get('phone')
+            
+            print(f"\n{'='*50}")
+            print(f"SEND OTP REQUEST RECEIVED")
+            print(f"Phone: {phone}")
+            print(f"{'='*50}\n")
+            
+            if not phone:
+                return JsonResponse({'success': False, 'error': 'Phone number required'})
+            
+            # Generate and send OTP via 2FA API
+            otp = create_otp(phone)
+            
+            print(f"\n{'='*50}")
+            print(f"OTP GENERATED: {otp}")
+            print(f"Phone: {phone}")
+            print(f"{'='*50}\n")
+            
+            return JsonResponse({
+                'success': True, 
+                'message': 'OTP sent via 2FA service'
+            })
+                
+        except Exception as e:
+            print(f"ERROR in send_otp: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def verify_otp(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            phone = data.get('phone')
+            otp_code = data.get('otp')
+            
+            if not phone or not otp_code:
+                return JsonResponse({'success': False, 'error': 'Phone and OTP required'})
+            
+            # Find valid OTP using hash
+            try:
+                from .twofa_api import verify_2fa_code
+                if verify_2fa_code(phone, otp_code):
+                    return JsonResponse({'success': True, 'message': 'OTP verified successfully'})
+                else:
+                    return JsonResponse({'success': False, 'error': 'Invalid OTP'})
+                
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+def get_active_sponsors(request):
+    return JsonResponse({'success': True, 'sponsors': []})
+
+def verify_otp_view(request):
+    phone = request.GET.get('phone')
+    user_otp = request.GET.get('otp')
+
+    otp_obj = OTP.objects.filter(phone=phone).last()
+
+    if not otp_obj:
+        return HttpResponse("OTP not found")
+
+    if otp_obj.otp == user_otp:
+        otp_obj.delete()  # Delete OTP after successful verification
+        return HttpResponse("OTP Verified. Login Success!")
+    else:
+        return HttpResponse("Invalid OTP")

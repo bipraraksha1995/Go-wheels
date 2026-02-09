@@ -11,7 +11,7 @@ class PincodeMappingAdmin(admin.ModelAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('phone', 'user', 'unique_id', 'pincode', 'blocked')
-    list_filter = ('blocked', 'created_at')
+    list_filter = ('blocked',)
     search_fields = ('phone', 'user__first_name', 'unique_id', 'pincode')
 
 @admin.register(Vehicle)

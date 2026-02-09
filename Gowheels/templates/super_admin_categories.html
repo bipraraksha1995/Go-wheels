@@ -237,7 +237,59 @@
             </div>
         </div>
         
-        <!-- Sub Admin List Modal -->
+        <!-- Ads Screen -->
+        <div id="ads-screen" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showScreen('main-menu')" class="btn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">← Back to Menu</button>
+            </div>
+            <div class="form-section">
+                <h2>📢 Ads Management</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 800px; margin: 0 auto;">
+                    <div onclick="showPromoteSettings()" style="background: rgba(111, 66, 193, 0.2); padding: 2rem; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid #6f42c1; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🚀</div>
+                        <h3 style="color: #6f42c1; margin-bottom: 1rem;">Promote</h3>
+                        <p style="color: #F5F5DC;">Set promote pricing per day</p>
+                        <p id="promote-price-display" style="color: #FFD700; font-weight: bold; margin-top: 1rem;">₹50/day</p>
+                    </div>
+                    <div onclick="showSponsorSettings()" style="background: rgba(220, 53, 69, 0.2); padding: 2rem; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid #dc3545; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">⭐</div>
+                        <h3 style="color: #dc3545; margin-bottom: 1rem;">Sponsor</h3>
+                        <p style="color: #F5F5DC;">Set sponsor pricing per day</p>
+                        <p id="sponsor-price-display" style="color: #FFD700; font-weight: bold; margin-top: 1rem;">₹100/day</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Promote Settings Modal -->
+        <div id="promote-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); border-radius: 20px; padding: 2rem; width: 90%; max-width: 500px; border: 2px solid #6f42c1;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="color: #6f42c1; margin: 0;">🚀 Promote Settings</h2>
+                    <button onclick="closePromoteModal()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                </div>
+                <div style="margin-bottom: 2rem;">
+                    <label style="color: #6f42c1; display: block; margin-bottom: 0.5rem;">Price per Day (₹)</label>
+                    <input type="number" id="promote-price-input" placeholder="Enter amount" style="width: 100%; padding: 1rem; border: 2px solid rgba(111, 66, 193, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #FFFFFF; font-size: 1.2rem;">
+                </div>
+                <button onclick="savePromotePrice()" class="btn" style="width: 100%; background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">Save Promote Price</button>
+            </div>
+        </div>
+        
+        <!-- Sponsor Settings Modal -->
+        <div id="sponsor-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); border-radius: 20px; padding: 2rem; width: 90%; max-width: 500px; border: 2px solid #dc3545;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="color: #dc3545; margin: 0;">⭐ Sponsor Settings</h2>
+                    <button onclick="closeSponsorModal()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                </div>
+                <div style="margin-bottom: 2rem;">
+                    <label style="color: #dc3545; display: block; margin-bottom: 0.5rem;">Price per Day (₹)</label>
+                    <input type="number" id="sponsor-price-input" placeholder="Enter amount" style="width: 100%; padding: 1rem; border: 2px solid rgba(220, 53, 69, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #FFFFFF; font-size: 1.2rem;">
+                </div>
+                <button onclick="saveSponsorPrice()" class="btn" style="width: 100%; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">Save Sponsor Price</button>
+            </div>
+        </div>
         <div id="subadmin-list-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); border-radius: 20px; padding: 2rem; width: 90%; max-width: 900px; max-height: 80vh; overflow-y: auto; border: 2px solid #FFD700;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -419,7 +471,7 @@
         }
 
         function showScreen(screenName) {
-            ['main-menu', 'add-groups-screen', 'add-info-screen', 'list-screen', 'subadmin-screen', 'added-groups-screen', 'category-screen', 'brand-screen', 'model-screen'].forEach(screen => {
+            ['main-menu', 'add-groups-screen', 'add-info-screen', 'list-screen', 'subadmin-screen', 'ads-screen', 'added-groups-screen', 'category-screen', 'brand-screen', 'model-screen'].forEach(screen => {
                 const element = document.getElementById(screen);
                 if (element) element.style.display = 'none';
             });
@@ -433,6 +485,9 @@
                 document.getElementById('list-screen').style.display = 'block';
             } else if (screenName === 'subadmin') {
                 document.getElementById('subadmin-screen').style.display = 'block';
+            } else if (screenName === 'ads') {
+                document.getElementById('ads-screen').style.display = 'block';
+                loadPromotionPrices();
             } else {
                 const targetScreen = document.getElementById(screenName);
                 if (targetScreen) targetScreen.style.display = 'block';
@@ -1217,6 +1272,99 @@
             .catch(error => {
                 console.error('Database save error:', error);
             });
+        }
+        
+        // Promotion functions
+        function loadPromotionPrices() {
+            fetch('/get-promotion-prices/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('promote-price-display').textContent = `₹${data.promote_price}/day`;
+                document.getElementById('sponsor-price-display').textContent = `₹${data.sponsor_price}/day`;
+            })
+            .catch(error => console.error('Error loading prices:', error));
+        }
+        
+        function showPromoteSettings() {
+            document.getElementById('promote-modal').style.display = 'block';
+            fetch('/get-promotion-prices/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('promote-price-input').value = data.promote_price;
+            });
+        }
+        
+        function closePromoteModal() {
+            document.getElementById('promote-modal').style.display = 'none';
+        }
+        
+        function savePromotePrice() {
+            const price = document.getElementById('promote-price-input').value;
+            if (!price || price <= 0) {
+                alert('Please enter a valid price');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('promote_price', price);
+            formData.append('sponsor_price', document.getElementById('sponsor-price-display').textContent.replace('₹', '').replace('/day', ''));
+            
+            fetch('/set-promotion-prices/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Promote price updated successfully!');
+                    closePromoteModal();
+                    loadPromotionPrices();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => alert('Error updating price'));
+        }
+        
+        function showSponsorSettings() {
+            document.getElementById('sponsor-modal').style.display = 'block';
+            fetch('/get-promotion-prices/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('sponsor-price-input').value = data.sponsor_price;
+            });
+        }
+        
+        function closeSponsorModal() {
+            document.getElementById('sponsor-modal').style.display = 'none';
+        }
+        
+        function saveSponsorPrice() {
+            const price = document.getElementById('sponsor-price-input').value;
+            if (!price || price <= 0) {
+                alert('Please enter a valid price');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('promote_price', document.getElementById('promote-price-display').textContent.replace('₹', '').replace('/day', ''));
+            formData.append('sponsor_price', price);
+            
+            fetch('/set-promotion-prices/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Sponsor price updated successfully!');
+                    closeSponsorModal();
+                    loadPromotionPrices();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => alert('Error updating price'));
         }
     </script>
 </body>

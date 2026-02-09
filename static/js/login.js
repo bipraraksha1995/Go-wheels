@@ -9,31 +9,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const phoneInput = document.getElementById('phone');
     const phoneDisplay = document.getElementById('phone-display');
-    const regPhoneInput = document.getElementById('reg-phone');
     const otpInputs = document.querySelectorAll('.otp-input');
     const profilePhotoInput = document.getElementById('profile-photo');
     
     let currentPhone = '';
-    let currentOTP = '';
-    
-    // Get phone number from URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const phoneFromUrl = urlParams.get('phone');
-    if (phoneFromUrl) {
-        phoneInput.value = phoneFromUrl;
-        currentPhone = phoneFromUrl;
-        phoneDisplay.textContent = phoneFromUrl;
-        
-        // Auto-generate OTP and show OTP step
-        currentOTP = '123456';
-        alert(`OTP sent to ${phoneFromUrl}. Your OTP is: ${currentOTP}`);
-        
-        setTimeout(() => {
-            autoFillOTP(currentOTP);
-        }, 2000);
-        
-        showStep(otpStep);
-    }
     
     // Phone form submission
     phoneForm.addEventListener('submit', function(e) {
@@ -43,19 +22,30 @@ document.addEventListener('DOMContentLoaded', function() {
         if (validatePhone(currentPhone)) {
             phoneDisplay.textContent = currentPhone;
             
-            // Generate and display OTP
-            currentOTP = '123456'; // Demo OTP
-            console.log('Generated OTP:', currentOTP);
-            alert(`OTP sent to ${currentPhone}. Your OTP is: ${currentOTP}`);
-            
-            // Auto-fill OTP after 2 seconds
-            setTimeout(() => {
-                autoFillOTP(currentOTP);
-            }, 2000);
-            
-            showStep(otpStep);
+            // Send OTP request to backend
+            fetch('/send-otp/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ phone: currentPhone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('OTP sent to your mobile. Please check your SMS.');
+                    showStep(otpStep);
+                } else {
+                    alert(data.error || 'Failed to send OTP');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send OTP. Please try again.');
+            });
         } else {
-            alert('Please enter a valid phone number');
+            alert('Please enter a valid 10-digit phone number');
         }
     });
     
@@ -84,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     window.location.href = '/user-dashboard/';
                 } else {
-                    alert(data.error || 'Login failed. Please try again.');
+                    alert(data.error || 'Invalid OTP. Please try again.');
                 }
             })
             .catch(error => {
@@ -92,33 +82,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Something went wrong. Please try again.');
             });
         } else {
-            alert('Please enter complete OTP');
+            alert('Please enter complete 6-digit OTP');
         }
     });
     
     // Registration form submission
-    registerForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const fullName = document.getElementById('full-name').value;
-        const pincode = document.getElementById('pincode').value;
-        const profilePhoto = profilePhotoInput.files[0];
-        
-        if (fullName && pincode) {
-            // Simulate registration
-            console.log('Registration data:', {
-                name: fullName,
-                phone: currentPhone,
-                pincode,
-                profilePhoto: profilePhoto ? profilePhoto.name : 'No photo'
-            });
+    if (registerForm) {
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            alert('Registration successful! Welcome to GoWheels!');
-            window.location.href = '/user-dashboard/';
-        } else {
-            alert('Please fill all required fields');
-        }
-    });
+            const fullName = document.getElementById('full-name').value;
+            const pincode = document.getElementById('pincode').value;
+            
+            if (fullName && pincode) {
+                alert('Registration successful! Welcome to GoWheels!');
+                window.location.href = '/user-dashboard/';
+            } else {
+                alert('Please fill all required fields');
+            }
+        });
+    }
     
     // OTP input handling
     otpInputs.forEach((input, index) => {
@@ -133,76 +116,71 @@ document.addEventListener('DOMContentLoaded', function() {
                 otpInputs[index - 1].focus();
             }
         });
+        
+        // Prevent paste
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedData = e.clipboardData.getData('text');
+            if (pastedData.length === 6 && /^\d+$/.test(pastedData)) {
+                otpInputs.forEach((inp, idx) => {
+                    inp.value = pastedData[idx] || '';
+                });
+            }
+        });
     });
     
     // Profile photo preview
-    profilePhotoInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const placeholder = document.querySelector('.photo-placeholder');
-                placeholder.innerHTML = `<img src="${e.target.result}" class="photo-preview" alt="Profile">`;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+    if (profilePhotoInput) {
+        profilePhotoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const placeholder = document.querySelector('.photo-placeholder');
+                    placeholder.innerHTML = `<img src="${e.target.result}" class="photo-preview" alt="Profile">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
     
     // Resend OTP
-    document.getElementById('resend-otp').addEventListener('click', function(e) {
-        e.preventDefault();
-        currentOTP = generateOTP();
-        console.log('Resending OTP to:', currentPhone);
-        console.log('New OTP:', currentOTP);
-        alert(`OTP resent to ${currentPhone}. Your new OTP is: ${currentOTP}`);
-        
-        // Auto-fill new OTP after 2 seconds
-        setTimeout(() => {
-            autoFillOTP(currentOTP);
-        }, 2000);
-    });
-    
-    // Show register form from phone step
-    document.getElementById('direct-register').addEventListener('click', function(e) {
-        e.preventDefault();
-        showStep(registerStep);
-    });
-    
-    // Show register form
-    document.getElementById('show-register').addEventListener('click', function(e) {
-        e.preventDefault();
-        showStep(registerStep);
-    });
-    
-    // Helper functions
+    const resendBtn = document.getElementById('resend-otp');
+    if (resendBtn) {
+        resendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Send OTP request to backend
+            fetch('/send-otp/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ phone: currentPhone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('OTP resent to your mobile. Please check your SMS.');
+                } else {
+                    alert(data.error || 'Failed to resend OTP');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to resend OTP. Please try again.');
+            });
+        });
+    }
     function showStep(step) {
         document.querySelectorAll('.login-step').forEach(s => s.classList.remove('active'));
         step.classList.add('active');
     }
     
     function validatePhone(phone) {
-        const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+        const phoneRegex = /^[6-9]\d{9}$/;
         return phoneRegex.test(phone.replace(/\s/g, ''));
-    }
-    
-    function verifyOTP(otp) {
-        // Simulate OTP verification (accept any 6-digit code for demo)
-        return otp.length === 6;
-    }
-    
-    function isExistingUser(phone) {
-        // Simulate user check (return false for demo to show registration)
-        return false;
-    }
-    
-    function generateOTP() {
-        return Math.floor(100000 + Math.random() * 900000).toString();
-    }
-    
-    function autoFillOTP(otp) {
-        otpInputs.forEach((input, index) => {
-            input.value = otp[index] || '';
-        });
     }
     
     function getCookie(name) {

@@ -1,6 +1,37 @@
 from django.db import models
 from django.contrib.auth.models import User
 import math
+from datetime import datetime, timedelta
+
+class PromotionSettings(models.Model):
+    promote_price_per_day = models.DecimalField(max_digits=8, decimal_places=2, default=50)
+    sponsor_price_per_day = models.DecimalField(max_digits=8, decimal_places=2, default=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Promote: ₹{self.promote_price_per_day}/day, Sponsor: ₹{self.sponsor_price_per_day}/day"
+
+class VehiclePromotion(models.Model):
+    PROMOTION_TYPES = [
+        ('promote', 'Promote'),
+        ('sponsor', 'Sponsor'),
+    ]
+    
+    vehicle = models.ForeignKey('Vehicle', on_delete=models.CASCADE, related_name='promotions')
+    promotion_type = models.CharField(max_length=20, choices=PROMOTION_TYPES)
+    days = models.IntegerField()
+    amount_paid = models.DecimalField(max_digits=8, decimal_places=2)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField()
+    active = models.BooleanField(default=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.end_date:
+            self.end_date = self.start_date + timedelta(days=self.days)
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.vehicle} - {self.promotion_type} for {self.days} days"
 
 class Pincode(models.Model):
     code = models.CharField(max_length=6, unique=True)

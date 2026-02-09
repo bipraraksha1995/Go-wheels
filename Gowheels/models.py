@@ -1,6 +1,30 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 import uuid
+import random
+import string
+from .encryption import Cipher
+from .crypto_utils import generate_secure_token
+
+class OTP(models.Model):
+    phone = models.CharField(max_length=15, db_index=True)
+    otp_hash = models.CharField(max_length=64)  # SHA-256 hash
+    expires_at = models.DateTimeField(db_index=True)
+    attempts = models.IntegerField(default=0)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.phone} - Expires: {self.expires_at}"
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['phone', 'is_used']),
+            models.Index(fields=['expires_at']),
+        ]
+
 
 class AdminGroup(models.Model):
     name = models.CharField(max_length=50)
@@ -36,6 +60,9 @@ class AdminModel(models.Model):
     def __str__(self):
         return f"{self.brand.name} - {self.name}"
 
+import secrets
+import string
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     unique_id = models.CharField(max_length=20, unique=True, blank=True)
@@ -43,17 +70,33 @@ class UserProfile(models.Model):
     pincode = models.CharField(max_length=10)
     profile_photo = models.ImageField(upload_to='profiles/', blank=True)
     blocked = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    api_key = models.CharField(max_length=255, unique=True, blank=True)
     
     def save(self, *args, **kwargs):
         if not self.unique_id:
-            import random
-            import string
-            # Generate 4 letters + 4 numbers
-            letters = ''.join(random.choices(string.ascii_uppercase, k=4))
-            numbers = ''.join(random.choices(string.digits, k=4))
+            # Generate 4 letters + 4 numbers using secure random
+            letters = ''.join(secrets.choice(string.ascii_uppercase) for _ in range(4))
+            numbers = ''.join(secrets.choice(string.digits) for _ in range(4))
             self.unique_id = f"{letters}{numbers}"
+        
+        # Generate API key if not present
+        if not self.api_key:
+            self.api_key = generate_secure_token(32)
+        
         super().save(*args, **kwargs)
+    
+    def get_phone(self):
+        """Get decrypted phone number"""
+        try:
+            cipher = Cipher()
+            return cipher.decrypt(self.phone)
+        except:
+            return self.phone  # Fallback for unencrypted data
+    
+    def set_phone(self, phone_number):
+        """Set encrypted phone number"""
+        cipher = Cipher()
+        self.phone = cipher.encrypt(phone_number)
     
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.unique_id}"
@@ -118,6 +161,11 @@ class Vehicle(models.Model):
         ('rejected', 'Rejected'),
     ]
     
+    LISTING_TYPES = [
+        ('rent', 'Rent'),
+        ('sell', 'Sell'),
+    ]
+    
     category_name = models.CharField(max_length=100)
     brand_name = models.CharField(max_length=50)
     model_name = models.CharField(max_length=100)
@@ -143,8 +191,46 @@ class Vehicle(models.Model):
     owner_name = models.CharField(max_length=100, blank=True)
     available = models.BooleanField(default=True)
     approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUS, default='pending')
+    listing_type = models.CharField(max_length=10, choices=LISTING_TYPES, default='rent')
+    promoted = models.BooleanField(default=False)
+    sponsored = models.BooleanField(default=False)
     added_by = models.CharField(max_length=50, default='super_admin')
+    # Manual cost prediction fields
+    manual_maintenance_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    manual_fuel_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    manual_insurance_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        # Don't encrypt - store as plain text
+        super().save(*args, **kwargs)
+    
+    def get_seller_phone(self):
+        """Get seller phone (handle both encrypted and plain text)"""
+        if not self.seller_phone:
+            return ''
+        # If encrypted, try to decrypt, otherwise return placeholder
+        if self.seller_phone.startswith('gAAAA') or '==' in self.seller_phone:
+            try:
+                cipher = Cipher()
+                return cipher.decrypt(self.seller_phone)
+            except:
+                return 'Not Available'
+        return self.seller_phone
+    
+    def get_owner_name(self):
+        """Get owner name (handle both encrypted and plain text)"""
+        if not self.owner_name:
+            return ''
+        # If encrypted, try to decrypt, otherwise return placeholder
+        if self.owner_name.startswith('gAAAA') or '==' in self.owner_name:
+            try:
+                cipher = Cipher()
+                return cipher.decrypt(self.owner_name)
+            except:
+                return 'Owner'
+        return self.owner_name
     
     def __str__(self):
         return f"{self.brand_name} {self.model_name} ({self.year})"
@@ -215,4 +301,57 @@ class Booking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.user.username} - {self.vehicle.name}"
+        return f"{self.user.username} - {self.vehicle.brand_name} {self.vehicle.model_name}"
+
+class Chat(models.Model):
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='chats')
+    buyer_phone = models.CharField(max_length=15)
+    seller_phone = models.CharField(max_length=15)
+    last_message = models.TextField(blank=True)
+    last_message_time = models.DateTimeField(auto_now=True)
+    unread_buyer = models.IntegerField(default=0)
+    unread_seller = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        unique_together = ('vehicle', 'buyer_phone')
+        ordering = ['-last_message_time']
+    
+    def __str__(self):
+        return f"Chat: {self.buyer_phone} <-> {self.seller_phone}"
+
+class Message(models.Model):
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
+    sender_phone = models.CharField(max_length=15)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"{self.sender_phone}: {self.message[:30]}"
+
+class Referral(models.Model):
+    referrer_phone = models.CharField(max_length=15)
+    referral_code = models.CharField(max_length=10, unique=True)
+    referred_phone = models.CharField(max_length=15, blank=True)
+    reward_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_claimed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"{self.referrer_phone} - {self.referral_code}"
+
+class Wishlist(models.Model):
+    user_phone = models.CharField(max_length=15)
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='wishlists')
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        unique_together = ('user_phone', 'vehicle')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user_phone} - {self.vehicle}"

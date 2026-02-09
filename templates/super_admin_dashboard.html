@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Super Admin Dashboard</title>
+    <style>
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 20px; }
+        .dashboard-card { background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center; }
+        .dashboard-card a { text-decoration: none; color: #333; }
+        .dashboard-card:hover { background: #e9ecef; }
+    </style>
+</head>
+<body>
+    <h1>Super Admin Dashboard</h1>
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <a href="/manage-groups/">
+                <h3>Manage Groups</h3>
+                <p>Create and manage groups</p>
+            </a>
+        </div>
+        <div class="dashboard-card">
+            <a href="/browse-groups/">
+                <h3>Browse Hierarchy</h3>
+                <p>View complete hierarchy</p>
+            </a>
+        </div>
+        <div class="dashboard-card">
+            <a href="/super-admin-logout/">
+                <h3>Logout</h3>
+                <p>Exit admin panel</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

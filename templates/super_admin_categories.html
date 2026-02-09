@@ -357,18 +357,91 @@
                 <div id="model-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 2rem;"></div>
             </div>
             
-            <!-- All Images Display -->
-            <div class="form-section">
-                <h2>📸 All Images</h2>
-                
-                <div id="all-category-images" style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;"></div>
-                
-                <div id="all-brand-images" style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;"></div>
-                
-                <div id="all-model-images" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem;"></div>
             </div>
         </div>
-    </div>
+        
+        <!-- Promote Modal -->
+        <div id="ads-screen" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button onclick="showScreen('main-menu')" class="btn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">← Back to Menu</button>
+            </div>
+            <div class="form-section">
+                <h2>📢 Ads Management</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 800px; margin: 0 auto;">
+                    <div onclick="showPromoteModal()" style="background: rgba(40, 167, 69, 0.2); padding: 2rem; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid #28a745; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
+                        <h3 style="color: #28a745; margin-bottom: 1rem;">Promote</h3>
+                        <p style="color: #F5F5DC;">Promote vehicles and boost visibility</p>
+                    </div>
+                    <div onclick="showSponsorModal()" style="background: rgba(255, 193, 7, 0.2); padding: 2rem; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid #ffc107; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">💰</div>
+                        <h3 style="color: #ffc107; margin-bottom: 1rem;">Sponsor</h3>
+                        <p style="color: #F5F5DC;">Sponsor content and featured listings</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Promote Modal -->
+        <div id="promote-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); border-radius: 20px; padding: 2rem; width: 90%; max-width: 600px; border: 2px solid #28a745;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="color: #28a745; margin: 0;">📈 Promote Vehicles</h2>
+                    <button onclick="closePromoteModal()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                </div>
+                <div style="padding: 1rem;">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🚀</div>
+                        <h3 style="color: #28a745; margin-bottom: 1rem;">Create Promotion Plan</h3>
+                        <p style="color: #F5F5DC; margin-bottom: 2rem;">Set custom promotion pricing for sellers</p>
+                    </div>
+                    
+                    <div style="background: rgba(40, 167, 69, 0.1); padding: 2rem; border-radius: 15px; margin-bottom: 2rem; border: 2px solid #28a745;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                            <div>
+                                <label style="color: #28a745; display: block; margin-bottom: 0.5rem; font-weight: bold;">Days</label>
+                                <input type="number" id="admin-days" min="1" value="1" style="width: 100%; padding: 1rem; border: 2px solid #28a745; border-radius: 10px; background: rgba(255, 255, 255, 0.9); color: #000; font-size: 1.1rem;">
+                            </div>
+                            <div>
+                                <label style="color: #28a745; display: block; margin-bottom: 0.5rem; font-weight: bold;">Price per Day (₹)</label>
+                                <input type="number" id="admin-price" min="1" value="50" style="width: 100%; padding: 1rem; border: 2px solid #28a745; border-radius: 10px; background: rgba(255, 255, 255, 0.9); color: #000; font-size: 1.1rem;">
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button onclick="createCustomPromotion()" class="btn" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 1rem 3rem; font-size: 1.1rem;">Create Promotion Plan</button>
+                        </div>
+                    </div>
+                    
+                    <div id="created-plans" style="background: rgba(255, 215, 0, 0.1); padding: 1.5rem; border-radius: 10px; border: 2px solid #FFD700;">
+                        <h4 style="color: #FFD700; margin-bottom: 1rem; text-align: center;">Active Promotion Plans</h4>
+                        <div id="plans-list" style="color: #F5F5DC;">Loading plans...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sponsor Modal -->
+        <div id="sponsor-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); border-radius: 20px; padding: 2rem; width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto; border: 2px solid #ffc107;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="color: #ffc107; margin: 0;">💰 Sponsor Ads Management</h2>
+                    <button onclick="closeSponsorModal()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div style="background: rgba(255, 193, 7, 0.1); padding: 2rem; border-radius: 15px; border: 2px solid #ffc107;">
+                        <h3 style="color: #ffc107; margin-bottom: 1rem; text-align: center;">Pending Approvals</h3>
+                        <div id="pending-sponsors" style="max-height: 300px; overflow-y: auto;">Loading...</div>
+                    </div>
+                    
+                    <div style="background: rgba(40, 167, 69, 0.1); padding: 2rem; border-radius: 15px; border: 2px solid #28a745;">
+                        <h3 style="color: #28a745; margin-bottom: 1rem; text-align: center;">Approved Sponsors</h3>
+                        <div id="approved-sponsors" style="max-height: 300px; overflow-y: auto;">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     <script>
         // Initialize data storage with localStorage persistence
@@ -419,7 +492,7 @@
         }
 
         function showScreen(screenName) {
-            ['main-menu', 'add-groups-screen', 'add-info-screen', 'list-screen', 'subadmin-screen', 'added-groups-screen', 'category-screen', 'brand-screen', 'model-screen'].forEach(screen => {
+            ['main-menu', 'add-groups-screen', 'add-info-screen', 'list-screen', 'subadmin-screen', 'ads-screen', 'added-groups-screen', 'category-screen', 'brand-screen', 'model-screen'].forEach(screen => {
                 const element = document.getElementById(screen);
                 if (element) element.style.display = 'none';
             });
@@ -433,6 +506,8 @@
                 document.getElementById('list-screen').style.display = 'block';
             } else if (screenName === 'subadmin') {
                 document.getElementById('subadmin-screen').style.display = 'block';
+            } else if (screenName === 'ads') {
+                document.getElementById('ads-screen').style.display = 'block';
             } else {
                 const targetScreen = document.getElementById(screenName);
                 if (targetScreen) targetScreen.style.display = 'block';
@@ -499,10 +574,47 @@
         }
         
         function deleteGroup(groupToDelete) {
-            if (confirm(`Delete ${groupToDelete.replace('group', 'Group ')}?`)) {
-                window.createdGroups = window.createdGroups.filter(group => group !== groupToDelete);
-                saveToStorage();
-                updateCreatedGroupsDisplay();
+            if (confirm(`Delete ${groupToDelete.replace('group', 'Group ')} permanently from database?`)) {
+                // Delete from database
+                const formData = new FormData();
+                formData.append('group_name', groupToDelete);
+                
+                fetch('/api/delete-admin-group/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove from local storage
+                        window.createdGroups = window.createdGroups.filter(group => group !== groupToDelete);
+                        
+                        // Remove all related data
+                        delete window.groupCategories[groupToDelete];
+                        
+                        Object.keys(window.categoryBrands).forEach(key => {
+                            if (key.startsWith(groupToDelete + '_')) {
+                                delete window.categoryBrands[key];
+                            }
+                        });
+                        
+                        Object.keys(window.brandModels).forEach(key => {
+                            if (key.startsWith(groupToDelete + '_')) {
+                                delete window.brandModels[key];
+                            }
+                        });
+                        
+                        saveToStorage();
+                        updateCreatedGroupsDisplay();
+                        displayAllImages();
+                        alert('Group deleted permanently from database!');
+                    } else {
+                        alert('Error deleting group: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error deleting group from database');
+                });
             }
         }
         
@@ -1308,6 +1420,295 @@
             }
         }
 
+        function showPromoteModal() {
+            document.getElementById('promote-modal').style.display = 'block';
+            loadPromotionPlans();
+        }
+        
+        function closePromoteModal() {
+            document.getElementById('promote-modal').style.display = 'none';
+        }
+        
+        function createCustomPromotion() {
+            const days = document.getElementById('admin-days').value;
+            const pricePerDay = document.getElementById('admin-price').value;
+            
+            if (!days || !pricePerDay || days < 1 || pricePerDay < 1) {
+                alert('Please enter valid days and price');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('duration_days', days);
+            formData.append('price_per_day', pricePerDay);
+            formData.append('created_by', 'super_admin');
+            formData.append('status', 'active');
+            
+            fetch('/api/create-promotion/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Promotion plan created!\n\nDuration: ${days} ${days == 1 ? 'day' : 'days'}\nPrice per day: ₹${pricePerDay}\nTotal: ₹${days * pricePerDay}`);
+                    document.getElementById('admin-days').value = '1';
+                    document.getElementById('admin-price').value = '50';
+                    loadPromotionPlans();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error creating promotion');
+            });
+        }
+        
+        function loadPromotionPlans() {
+            fetch('/api/get-promotion-plans/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.plans) {
+                    let html = '';
+                    data.plans.forEach(plan => {
+                        html += `<div style="background: rgba(40, 167, 69, 0.2); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #28a745;">`;
+                        html += `<strong>${plan.duration_days} ${plan.duration_days == 1 ? 'Day' : 'Days'}</strong> - ₹${plan.price_per_day}/day (Total: ₹${plan.duration_days * plan.price_per_day})`;
+                        html += `</div>`;
+                    });
+                    document.getElementById('plans-list').innerHTML = html || 'No plans created yet';
+                } else {
+                    document.getElementById('plans-list').innerHTML = 'No plans available';
+                }
+            })
+            .catch(error => {
+                document.getElementById('plans-list').innerHTML = 'Error loading plans';
+            });
+        }
+        
+        function showSponsorModal() {
+            document.getElementById('sponsor-modal').style.display = 'block';
+            loadSponsorAds();
+        }
+        
+        function closeSponsorModal() {
+            document.getElementById('sponsor-modal').style.display = 'none';
+        }
+        
+        function loadSponsorAds() {
+            fetch('/api/get-sponsor-ads/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Store sponsors in session storage for WhatsApp access
+                    sessionStorage.setItem('currentSponsors', JSON.stringify([...data.pending, ...data.approved]));
+                    displayPendingSponsors(data.pending || []);
+                    displayApprovedSponsors(data.approved || []);
+                } else {
+                    document.getElementById('pending-sponsors').innerHTML = 'Error loading sponsors';
+                    document.getElementById('approved-sponsors').innerHTML = 'Error loading sponsors';
+                }
+            })
+            .catch(error => {
+                document.getElementById('pending-sponsors').innerHTML = 'Error loading sponsors';
+                document.getElementById('approved-sponsors').innerHTML = 'Error loading sponsors';
+            });
+        }
+        
+        function displayPendingSponsors(sponsors) {
+            const container = document.getElementById('pending-sponsors');
+            if (sponsors.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">No pending sponsors</p>';
+                return;
+            }
+            
+            let html = '';
+            sponsors.forEach(sponsor => {
+                html += `
+                    <div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ffc107;">
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <img src="/media/${sponsor.image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'">
+                            <div style="flex: 1;">
+                                <h4 style="color: #ffc107; margin: 0 0 0.5rem 0;">${sponsor.brand_name}</h4>
+                                <p style="color: #F5F5DC; font-size: 0.9rem; margin: 0 0 0.5rem 0;">${sponsor.description || 'No description'}</p>
+                                <p style="color: #ccc; font-size: 0.8rem; margin: 0;">Contact: ${sponsor.contact || 'Not provided'}</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                            <button onclick="whatsappSponsor('${sponsor.contact}', '${sponsor.brand_name}')" style="background: #25D366; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-size: 0.9rem;">💬 WhatsApp</button>
+                            <button onclick="approveSponsor(${sponsor.id})" style="background: #28a745; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-size: 0.9rem;">✓ Approve</button>
+                            <button onclick="rejectSponsor(${sponsor.id})" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-size: 0.9rem;">✗ Reject</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        function displayApprovedSponsors(sponsors) {
+            const container = document.getElementById('approved-sponsors');
+            if (sponsors.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">No approved sponsors</p>';
+                return;
+            }
+            
+            let html = '';
+            sponsors.forEach(sponsor => {
+                html += `
+                    <div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #28a745;">
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <img src="/media/${sponsor.image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'">
+                            <div style="flex: 1;">
+                                <h4 style="color: #28a745; margin: 0 0 0.5rem 0;">${sponsor.brand_name}</h4>
+                                <p style="color: #F5F5DC; font-size: 0.9rem; margin: 0 0 0.5rem 0;">${sponsor.description || 'No description'}</p>
+                                <p style="color: #ccc; font-size: 0.8rem; margin: 0;">Contact: ${sponsor.contact || 'Not provided'}</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <button onclick="toggleSponsorStatus(${sponsor.id})" style="background: #ffc107; color: #333; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; margin-right: 0.5rem;">${sponsor.active ? 'Hide' : 'Show'}</button>
+                            <button onclick="deleteSponsor(${sponsor.id})" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        function approveSponsor(sponsorId) {
+            // Show payment confirmation dialog first
+            const paymentConfirmed = confirm('Has the sponsor completed the payment?\n\nClick OK if payment is received\nClick Cancel to approve without payment check');
+            
+            if (paymentConfirmed) {
+                // Payment confirmed - approve directly
+                confirmSponsorApproval(sponsorId, true);
+            } else {
+                // Ask if they want to send payment reminder
+                const sendReminder = confirm('Send payment reminder via WhatsApp?');
+                if (sendReminder) {
+                    // Get sponsor details and send reminder
+                    const sponsors = JSON.parse(sessionStorage.getItem('currentSponsors') || '[]');
+                    const sponsor = sponsors.find(s => s.id === sponsorId);
+                    if (sponsor) {
+                        sendPaymentReminder(sponsor.contact, sponsor.brand_name);
+                    }
+                } else {
+                    // Approve anyway
+                    confirmSponsorApproval(sponsorId, false);
+                }
+            }
+        }
+        
+        function confirmSponsorApproval(sponsorId, paymentReceived) {
+            fetch(`/api/approve-sponsor/${sponsorId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `payment_received=${paymentReceived}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const message = paymentReceived ? 
+                        'Sponsor approved with payment confirmation!' : 
+                        'Sponsor approved (payment pending)';
+                    alert(message);
+                    loadSponsorAds();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error approving sponsor');
+            });
+        }
+        
+        function sendPaymentReminder(contact, brandName) {
+            const phoneNumber = contact.replace(/[^0-9]/g, '');
+            const message = `Hi! This is a reminder about your GoWheels sponsorship for "${brandName}".\n\nPayment Details:\n₹500/month\n\nUPI ID: gowheels@paytm\nPhone Pay: 9876543210\n\nPlease complete payment and send screenshot for approval.\n\nThank you!`;
+            
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        function rejectSponsor(sponsorId) {
+            if (confirm('Reject this sponsor ad?')) {
+                fetch(`/api/reject-sponsor/${sponsorId}/`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Sponsor rejected successfully!');
+                        loadSponsorAds();
+                    } else {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    alert('Error rejecting sponsor');
+                });
+            }
+        }
+        
+        function toggleSponsorStatus(sponsorId) {
+            fetch(`/api/toggle-sponsor-status/${sponsorId}/`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadSponsorAds();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error toggling sponsor status');
+            });
+        }
+        
+        function deleteSponsor(sponsorId) {
+            if (confirm('Delete this sponsor ad permanently?')) {
+                fetch(`/api/delete-sponsor/${sponsorId}/`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Sponsor deleted successfully!');
+                        loadSponsorAds();
+                    } else {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    alert('Error deleting sponsor');
+                });
+            }
+        }
+        
+        function whatsappSponsor(contact, brandName) {
+            if (!contact || contact === 'Not provided') {
+                alert('No contact information available for this sponsor');
+                return;
+            }
+            
+            // Clean phone number (remove non-digits)
+            const phoneNumber = contact.replace(/[^0-9]/g, '');
+            
+            if (phoneNumber.length < 10) {
+                alert('Invalid phone number format');
+                return;
+            }
+            
+            // Create WhatsApp message
+            const message = `Hello! I'm from GoWheels admin team.\n\nI received your sponsor ad request for "${brandName}".\n\nTo proceed with your sponsorship:\n\n1. Sponsor fee: ₹500/month\n2. Payment via UPI/QR code\n3. After payment confirmation, your ad will be approved\n\nWould you like to proceed with the payment?\n\nThank you!`;
+            
+            // Open WhatsApp
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+        
         function saveToDatabase(type, name, imageFile) {
             const formData = new FormData();
             formData.append('type', type);

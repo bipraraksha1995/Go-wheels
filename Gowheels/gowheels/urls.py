@@ -34,4 +34,7 @@ urlpatterns = [
     path('get-vehicles/', views.get_vehicles, name='get_vehicles'),
     path('track-vehicle-click/', views.track_vehicle_click, name='track_vehicle_click'),
     path('seller-vehicles/', views.seller_vehicles, name='seller_vehicles'),
+    path('set-promotion-prices/', views.set_promotion_prices, name='set_promotion_prices'),
+    path('get-promotion-prices/', views.get_promotion_prices, name='get_promotion_prices'),
+    path('promote-vehicle/<int:vehicle_id>/', views.promote_vehicle, name='promote_vehicle'),
 ]

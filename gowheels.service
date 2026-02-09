@@ -1,0 +1,52 @@
+[Unit]
+Description=GoWheels Application
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=notify
+User=appuser
+Group=appuser
+WorkingDirectory=/app
+Environment="PATH=/app/venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=gowheels_project.settings"
+
+# Graceful shutdown
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=5
+
+# Start command
+ExecStart=/app/venv/bin/gunicorn \
+    --bind 0.0.0.0:8000 \
+    --workers 4 \
+    --timeout 120 \
+    --graceful-timeout 30 \
+    --access-logfile /var/log/gowheels/access.log \
+    --error-logfile /var/log/gowheels/error.log \
+    --log-level info \
+    --pid /var/run/gowheels.pid \
+    gowheels_project.wsgi:application
+
+# Reload command (graceful restart)
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Health check
+ExecStartPost=/bin/sleep 5
+ExecStartPost=/usr/bin/curl -f http://localhost:8000/health/ || exit 1
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/gowheels /app/media /app/logs
+
+[Install]
+WantedBy=multi-user.target

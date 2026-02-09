@@ -163,6 +163,78 @@
             text-decoration: underline;
         }
         
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: #565959;
+            font-size: 14px;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #DDD;
+        }
+        
+        .divider span {
+            margin: 0 12px;
+        }
+        
+        .oauth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .btn-oauth {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            background: #FFF;
+            color: #0F1111;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        
+        .btn-oauth:hover {
+            background: #F7F8F8;
+            border-color: #0066C0;
+        }
+        
+        .btn-oauth-google {
+            border-color: #DDD;
+        }
+        
+        .btn-oauth-google:hover {
+            background: #F9F9F9;
+            border-color: #4285F4;
+        }
+        
+        .btn-oauth-github {
+            border-color: #DDD;
+        }
+        
+        .btn-oauth-github:hover {
+            background: #F9F9F9;
+            border-color: #333;
+        }
+        
+        .oauth-icon {
+            font-size: 18px;
+        }
+        
         .profile-photo {
             text-align: center;
             margin-bottom: 24px;
@@ -269,6 +341,17 @@
                         </div>
                         <button type="submit" class="btn-submit">Send OTP</button>
                     </form>
+                    
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <div class="oauth-buttons">
+                        <a href="/accounts/google/login/" class="btn-oauth btn-oauth-google">
+                            <span class="oauth-icon">🔐</span>
+                            Login with Google
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -280,12 +363,12 @@
                     
                     <form id="otp-form">
                         <div class="otp-inputs">
-                            <input type="text" maxlength="1" class="otp-input">
-                            <input type="text" maxlength="1" class="otp-input">
-                            <input type="text" maxlength="1" class="otp-input">
-                            <input type="text" maxlength="1" class="otp-input">
-                            <input type="text" maxlength="1" class="otp-input">
-                            <input type="text" maxlength="1" class="otp-input">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" maxlength="1" class="otp-input" autocomplete="off">
                         </div>
                         <button type="submit" class="btn-submit">Verify & Login</button>
                         <div class="login-options">
@@ -295,51 +378,80 @@
                 </div>
             </div>
 
-            <!-- Registration Step -->
-            <div id="register-step" class="login-step">
-                <div class="login-card">
-                    <h2>Complete Your Profile</h2>
-                    <p>New user? Please complete your registration</p>
-                    
-                    <form id="register-form" enctype="multipart/form-data">
-                        <div class="profile-photo">
-                            <div class="photo-upload">
-                                <input type="file" id="profile-photo" accept="image/*" hidden>
-                                <label for="profile-photo" class="photo-label">
-                                    <div class="photo-placeholder">
-                                        <span>📷</span>
-                                        <p>Photo</p>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="input-group">
-                            <label for="full-name">Full Name</label>
-                            <input type="text" id="full-name" placeholder="Enter your full name" required>
-                        </div>
-                        
-                        <div class="input-group">
-                            <label for="pincode">Pincode</label>
-                            <input type="text" id="pincode" placeholder="Enter your pincode" required>
-                        </div>
-                        
-                        <button type="submit" class="btn-submit">Complete Registration</button>
-                    </form>
-                </div>
-            </div>
-            
-            <!-- Success Step -->
-            <div id="success-step" class="login-step">
-                <div class="login-card">
-                    <h2>Login Successful!</h2>
-                    <div id="user-id-container"></div>
-                    <p>Welcome to GoWheels. You will be redirected shortly.</p>
-                </div>
-            </div>
         </div>
     </div>
     
-    <script src="/static/js/login.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const phoneStep = document.getElementById('phone-step');
+            const otpStep = document.getElementById('otp-step');
+            const phoneForm = document.getElementById('phone-form');
+            const otpForm = document.getElementById('otp-form');
+            const phoneInput = document.getElementById('phone');
+            const phoneDisplay = document.getElementById('phone-display');
+            const otpInputs = document.querySelectorAll('.otp-input');
+            let currentPhone = '';
+            
+            phoneForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                currentPhone = phoneInput.value;
+                if (currentPhone.length === 10) {
+                    phoneDisplay.textContent = currentPhone;
+                    fetch('/send-otp/', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+                        body: JSON.stringify({ phone: currentPhone })
+                    }).then(r => r.json()).then(d => {
+                        if (d.success) {
+                            alert('OTP sent to your mobile');
+                            showStep(otpStep);
+                        } else alert(d.error || 'Failed to send OTP');
+                    });
+                } else alert('Enter valid 10-digit phone number');
+            });
+            
+            otpForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const otp = Array.from(otpInputs).map(i => i.value).join('');
+                if (otp.length === 6) {
+                    fetch('/login/', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken')},
+                        body: `phone=${currentPhone}&otp=${otp}`
+                    }).then(r => r.json()).then(d => {
+                        if (d.success) {
+                            alert('Login successful!');
+                            window.location.href = '/user-dashboard/';
+                        } else alert(d.error || 'Invalid OTP');
+                    });
+                }
+            });
+            
+            otpInputs.forEach((input, index) => {
+                input.addEventListener('input', function() {
+                    if (this.value.length === 1 && index < otpInputs.length - 1) otpInputs[index + 1].focus();
+                });
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && this.value === '' && index > 0) otpInputs[index - 1].focus();
+                });
+            });
+            
+            function showStep(step) {
+                document.querySelectorAll('.login-step').forEach(s => s.classList.remove('active'));
+                step.classList.add('active');
+            }
+            
+            function getCookie(name) {
+                let c = null;
+                if (document.cookie) {
+                    document.cookie.split(';').forEach(cookie => {
+                        const t = cookie.trim();
+                        if (t.startsWith(name + '=')) c = decodeURIComponent(t.substring(name.length + 1));
+                    });
+                }
+                return c;
+            }
+        });
+    </script>
 </body>
 </html>

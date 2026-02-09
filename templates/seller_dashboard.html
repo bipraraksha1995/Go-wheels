@@ -258,31 +258,38 @@
                 <div class="screen-title">Vehicle Details</div>
             </div>
             <form id="vehicle-form" class="form-section">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <div class="input-group">
-                        <label>Owner Name</label>
-                        <input type="text" id="owner-name" placeholder="Enter owner name" value="{{ user_name }}">
-                    </div>
-                    <div class="input-group">
-                        <label>Phone Number</label>
-                        <input type="text" id="phone" placeholder="Enter phone number" value="{{ user_phone }}">
-                    </div>
+                <div class="input-group">
+                    <label style="font-size: 16px; font-weight: 600;">Listing Type</label>
+                    <select id="listing-type" required onchange="togglePricingFields()" style="font-size: 16px; padding: 12px;">
+                        <option value="rent">🏠 Rent</option>
+                        <option value="sell">💰 Sell</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Owner Name</label>
+                    <input type="text" id="owner-name" placeholder="Enter owner name" value="{{ user_name }}" required>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="input-group">
-                        <label>Pincode</label>
-                        <input type="text" id="pincode" placeholder="400001" maxlength="6" value="{{ user_pincode }}">
+                        <label>Phone Number</label>
+                        <input type="text" id="phone" placeholder="Enter phone number" value="{{ user_phone }}" required>
                     </div>
+                    <div class="input-group">
+                        <label>Pincode</label>
+                        <input type="text" id="pincode" placeholder="400001" maxlength="6" value="{{ user_pincode }}" required>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="input-group">
                         <label>Village</label>
                         <input type="text" id="village" placeholder="Enter village" value="{{ user_village }}">
                     </div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="input-group">
                         <label>Year</label>
-                        <input type="number" id="year" min="2010" max="2025" placeholder="2023">
+                        <input type="number" id="year" min="2010" max="2025" placeholder="2023" required>
                     </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="input-group">
                         <label>Unit Type</label>
                         <select id="unit-type" onchange="showUnitInput()">
@@ -292,19 +299,44 @@
                             <option value="cubic_feet">Cubic Feet</option>
                         </select>
                     </div>
-                </div>
-                <div id="unit-input-section" class="input-group" style="display: none;">
-                    <label id="unit-input-label">Value (₹)</label>
-                    <input type="number" id="unit-value" min="1" placeholder="Enter value">
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <div class="input-group">
-                        <label>Per Hour Price (₹)</label>
-                        <input type="number" id="hourly-price" min="1" placeholder="500">
+                    <div id="unit-input-section" class="input-group" style="display: none;">
+                        <label id="unit-input-label">Value (₹)</label>
+                        <input type="number" id="unit-value" min="1" placeholder="Enter value">
                     </div>
+                </div>
+                <div id="rent-fields">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="input-group">
+                            <label>Per Hour Price (₹)</label>
+                            <input type="number" id="hourly-price" min="1" placeholder="500">
+                        </div>
+                        <div class="input-group">
+                            <label>Per Day Price (₹)</label>
+                            <input type="number" id="daily-price" min="1" placeholder="2500">
+                        </div>
+                    </div>
+                </div>
+                <div id="sell-fields" style="display: none;">
                     <div class="input-group">
-                        <label>Per Day Price (₹)</label>
-                        <input type="number" id="daily-price" min="1" placeholder="2500">
+                        <label>Selling Price (₹)</label>
+                        <input type="number" id="sell-price" min="1" placeholder="50000">
+                    </div>
+                    <div style="background: #f0f8ff; padding: 16px; border-radius: 8px; margin-top: 12px;">
+                        <h4 style="margin-bottom: 12px; color: #1976d2;">📊 Cost Prediction (Optional)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="input-group">
+                                <label>Maintenance (2 years)</label>
+                                <input type="number" id="maintenance-cost" min="0" placeholder="20000">
+                            </div>
+                            <div class="input-group">
+                                <label>Fuel Cost (2 years)</label>
+                                <input type="number" id="fuel-cost" min="0" placeholder="133333">
+                            </div>
+                            <div class="input-group">
+                                <label>Insurance (2 years)</label>
+                                <input type="number" id="insurance-cost" min="0" placeholder="2500">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="input-group">
@@ -465,8 +497,23 @@
             formData.append('pincode', document.getElementById('pincode').value);
             formData.append('village', document.getElementById('village').value);
             formData.append('year', document.getElementById('year').value);
-            formData.append('hourly_price', document.getElementById('hourly-price').value);
-            formData.append('daily_price', document.getElementById('daily-price').value);
+            formData.append('listing_type', document.getElementById('listing-type').value);
+            
+            const listingType = document.getElementById('listing-type').value;
+            if (listingType === 'rent') {
+                formData.append('hourly_price', document.getElementById('hourly-price').value);
+                formData.append('daily_price', document.getElementById('daily-price').value);
+            } else {
+                formData.append('sell_price', document.getElementById('sell-price').value);
+                // Add manual cost prediction values if provided
+                const maintenanceCost = document.getElementById('maintenance-cost').value;
+                const fuelCost = document.getElementById('fuel-cost').value;
+                const insuranceCost = document.getElementById('insurance-cost').value;
+                
+                if (maintenanceCost) formData.append('maintenance_cost', maintenanceCost);
+                if (fuelCost) formData.append('fuel_cost', fuelCost);
+                if (insuranceCost) formData.append('insurance_cost', insuranceCost);
+            }
             
             formData.append('unit_type', document.getElementById('unit-type').value);
             formData.append('unit_value', document.getElementById('unit-value').value);
@@ -526,6 +573,12 @@
             } else {
                 unitSection.style.display = 'none';
             }
+        }
+        
+        function togglePricingFields() {
+            const listingType = document.getElementById('listing-type').value;
+            document.getElementById('rent-fields').style.display = listingType === 'rent' ? 'block' : 'none';
+            document.getElementById('sell-fields').style.display = listingType === 'sell' ? 'block' : 'none';
         }
         
         function getCookie(name) {

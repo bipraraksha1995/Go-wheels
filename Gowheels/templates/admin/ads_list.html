@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Ads Buttons</title>
+    <style>
+        .btn { padding: 8px 15px; margin: 5px; border: none; cursor: pointer; border-radius: 4px; }
+        .btn-promote { background: #28a745; color: white; }
+        .btn-sponsor { background: #007bff; color: white; }
+        .btn-active { opacity: 0.5; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>Super Admin - Ads Management</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Year</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vehicle in vehicles %}
+            <tr>
+                <td>{{ vehicle.brand_name }}</td>
+                <td>{{ vehicle.model_name }}</td>
+                <td>{{ vehicle.year }}</td>
+                <td>${{ vehicle.price }}</td>
+                <td>
+                    <button class="btn btn-promote {% if vehicle.promoted %}btn-active{% endif %}" 
+                            onclick="togglePromote({{ vehicle.id }})">
+                        Promote
+                    </button>
+                    <button class="btn btn-sponsor {% if vehicle.sponsored %}btn-active{% endif %}" 
+                            onclick="toggleSponsor({{ vehicle.id }})">
+                        Sponsor
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No vehicles found. Please add some vehicles first.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function togglePromote(vehicleId) {
+            fetch(`/admin/ads/promote/${vehicleId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Promote toggled:', data);
+                location.reload();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function toggleSponsor(vehicleId) {
+            fetch(`/admin/ads/sponsor/${vehicleId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Sponsor toggled:', data);
+                location.reload();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

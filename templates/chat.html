@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - GoWheels</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: #f5f5f5; display: flex; flex-direction: column; height: 100vh; }
+        .header { background: #FFD700; padding: 16px; display: flex; align-items: center; }
+        .back-btn { font-size: 20px; margin-right: 12px; cursor: pointer; }
+        .header-info { flex: 1; }
+        .vehicle-name { font-weight: 600; font-size: 16px; }
+        .other-phone { color: #333; font-size: 14px; }
+        .messages { flex: 1; overflow-y: auto; padding: 16px; }
+        .message { margin-bottom: 12px; display: flex; }
+        .message.mine { justify-content: flex-end; }
+        .message-bubble { max-width: 70%; padding: 10px 14px; border-radius: 16px; }
+        .message.mine .message-bubble { background: #FFD700; color: #000; }
+        .message:not(.mine) .message-bubble { background: #e5e5ea; color: #000; }
+        .message-time { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .input-area { background: white; padding: 12px; display: flex; gap: 8px; border-top: 1px solid #ddd; }
+        .input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px; }
+        .input-area button { background: #FFD700; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="back-btn" onclick="location.href='/inbox/'">←</div>
+        <div class="header-info">
+            <div class="vehicle-name">{{ vehicle_name }}</div>
+            <div class="other-phone">{{ other_phone }}</div>
+        </div>
+    </div>
+    
+    <div class="messages" id="messages">
+        {% for msg in messages %}
+        <div class="message {% if msg.is_mine %}mine{% endif %}">
+            <div class="message-bubble">
+                <div>{{ msg.message }}</div>
+                <div class="message-time">{{ msg.time }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="input-area">
+        <input type="text" id="messageInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    
+    <script>
+        const chatId = {{ chat_id }};
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            fetch('/send-message/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({chat_id: chatId, message: message})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    loadMessages();
+                }
+            });
+        }
+        
+        function loadMessages() {
+            fetch('/get-messages/' + chatId + '/')
+            .then(r => r.json())
+            .then(data => {
+                const container = document.getElementById('messages');
+                container.innerHTML = data.messages.map(msg => `
+                    <div class="message ${msg.is_mine ? 'mine' : ''}">
+                        <div class="message-bubble">
+                            <div>${msg.message}</div>
+                            <div class="message-time">${msg.time}</div>
+                        </div>
+                    </div>
+                `).join('');
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+        
+        // Poll for new messages every 3 seconds
+        setInterval(loadMessages, 3000);
+        
+        // Scroll to bottom on load
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    </script>
+</body>
+</html>

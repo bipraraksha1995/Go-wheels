@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Browse Brands - {{ category.name }}</title>
+    <style>
+        .brand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; }
+        .brand-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; }
+        .brand-card:hover { background-color: #f5f5f5; }
+        .brand-image { width: 100%; height: 150px; object-fit: cover; border-radius: 5px; }
+        .breadcrumb { padding: 10px 20px; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <div class="breadcrumb">
+        <a href="/browse-groups/">Groups</a> > 
+        <a href="/browse-categories/{{ category.group.id }}/">{{ category.group.name }}</a> > 
+        {{ category.name }}
+    </div>
+    
+    <h1>Brands in {{ category.name }}</h1>
+    <div class="brand-grid">
+        {% for brand in brands %}
+        <div class="brand-card" onclick="location.href='/browse-models/{{ brand.id }}/'">
+            <img src="{{ brand.image.url }}" alt="{{ brand.name }}" class="brand-image">
+            <h3>{{ brand.name }}</h3>
+            <p>{{ brand.models.count }} models</p>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

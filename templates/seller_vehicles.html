@@ -127,6 +127,14 @@
             background: #D00;
             color: white;
         }
+        .btn-promote {
+            background: #6f42c1;
+            color: white;
+        }
+        .btn-promoted {
+            background: #28a745;
+            opacity: 0.8;
+        }
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -161,31 +169,6 @@
     </div>
 
     <div class="container">
-        <!-- Profile Section -->
-        <div style="background: white; border: 1px solid #DDD; border-radius: 8px; padding: 16px; margin-bottom: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;" id="profile-avatar">U</div>
-                <div>
-                    <h2 style="margin: 0 0 4px 0; color: #0F1111; font-size: 20px;" id="profile-name">Loading...</h2>
-                    <p style="margin: 0; color: #565959; font-size: 14px;">Vehicle Owner</p>
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-                <div style="background: #F7F8F8; padding: 12px; border-radius: 4px;">
-                    <div style="font-size: 12px; color: #565959; margin-bottom: 4px;">Phone Number</div>
-                    <div style="font-size: 14px; font-weight: 500; color: #0F1111;" id="profile-phone">Loading...</div>
-                </div>
-                <div style="background: #F7F8F8; padding: 12px; border-radius: 4px;">
-                    <div style="font-size: 12px; color: #565959; margin-bottom: 4px;">Pincode</div>
-                    <div style="font-size: 14px; font-weight: 500; color: #0F1111;" id="profile-pincode">Loading...</div>
-                </div>
-                <div style="background: #F7F8F8; padding: 12px; border-radius: 4px;">
-                    <div style="font-size: 12px; color: #565959; margin-bottom: 4px;">User ID</div>
-                    <div style="font-size: 14px; font-weight: 500; color: #0F1111;" id="profile-id">Loading...</div>
-                </div>
-            </div>
-        </div>
-
         <h1 style="margin-bottom: 24px; color: #0F1111;">My Vehicle Management</h1>
         
         <div class="stats" id="stats">
@@ -208,31 +191,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            loadProfile();
             loadVehicles();
         });
-
-        function loadProfile() {
-            fetch('/api/get-user-profile/')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('profile-name').textContent = data.name || 'Not Available';
-                        document.getElementById('profile-phone').textContent = data.phone || 'Not Available';
-                        document.getElementById('profile-pincode').textContent = data.pincode || 'Not Available';
-                        document.getElementById('profile-id').textContent = data.unique_id || 'Not Available';
-                        
-                        // Set avatar initial
-                        const avatar = document.getElementById('profile-avatar');
-                        if (data.name && data.name.trim()) {
-                            avatar.textContent = data.name.charAt(0).toUpperCase();
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading profile:', error);
-                });
-        }
 
         function loadVehicles() {
             fetch('/get-seller-vehicles/')
@@ -242,7 +202,7 @@
                         displayVehicles(data.vehicles);
                         updateStats(data);
                     } else {
-                        document.getElementById('vehicles-list').innerHTML = '<p style="text-align: center; color: #565959; padding: 40px;">No vehicles found. <a href="/seller-dashboard/">Add your first vehicle</a></p>';
+                        document.getElementById('vehicles-list').innerHTML = '<p style="text-align: center; color: #565959; padding: 40px;">No vehicles found.</p>';
                     }
                 })
                 .catch(error => {
@@ -251,42 +211,28 @@
                 });
         }
 
-        let vehicleImagesData = {};
-
         function displayVehicles(vehicles) {
             const container = document.getElementById('vehicles-list');
             let html = '';
 
+            // Sort vehicles - promoted first
+            vehicles.sort((a, b) => {
+                if (a.promoted && !b.promoted) return -1;
+                if (!a.promoted && b.promoted) return 1;
+                return b.id - a.id;
+            });
+
             vehicles.forEach(vehicle => {
-                // Store images data for modal
-                vehicleImagesData[vehicle.id] = vehicle.images || [];
-                
                 const statusClass = vehicle.available ? 'status-active' : 'status-inactive';
                 const statusText = vehicle.available ? 'Active' : 'Inactive';
+                const promotedBadge = vehicle.promoted ? '<span style="background: #6f42c1; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 8px;">PROMOTED</span>' : '';
                 
                 html += `
-                    <div class="vehicle-card">
+                    <div class="vehicle-card" style="${vehicle.promoted ? 'border: 2px solid #6f42c1; background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);' : ''}">
                         <div class="vehicle-header">
-                            <div class="vehicle-title">${vehicle.category_name} - ${vehicle.brand_name} ${vehicle.model_name}</div>
+                            <div class="vehicle-title">${vehicle.category_name} - ${vehicle.brand_name} ${vehicle.model_name}${promotedBadge}</div>
                             <div class="status-badge ${statusClass}">${statusText}</div>
                         </div>
-                        
-                        ${vehicle.recent_clicks && vehicle.recent_clicks.length > 0 ? `
-                            <div style="background: #F0F8FF; padding: 12px; border-radius: 6px; margin-bottom: 16px; border-left: 4px solid #0066C0;">
-                                <h4 style="margin: 0 0 8px 0; color: #0066C0; font-size: 14px;">Recent User Clicks (${vehicle.click_count || 0} total)</h4>
-                                ${vehicle.recent_clicks.map(click => `
-                                    <div style="background: white; padding: 8px; border-radius: 4px; margin-bottom: 6px; border: 1px solid #E0E0E0;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <div>
-                                                <div style="font-weight: 500; color: #0F1111;">${click.buyer_name}</div>
-                                                <div style="font-size: 12px; color: #565959;">${click.buyer_phone}</div>
-                                            </div>
-                                            <div style="font-size: 11px; color: #565959;">${click.clicked_at}</div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
                         
                         <div class="vehicle-details">
                             <div class="detail-item">
@@ -301,24 +247,357 @@
                             <div class="detail-item">
                                 <span class="detail-label">Pincode:</span> ${vehicle.pincode || 'Not set'}
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Village:</span> ${vehicle.village || 'Not set'}
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Clicks:</span> ${vehicle.click_count || 0}
-                            </div>
                         </div>
-                        
-                        ${vehicle.images && vehicle.images.length > 0 ? `
-                            <div class="vehicle-images">
-                                ${vehicle.images.slice(0, 5).map((img, index) => `<img src="${img}" class="vehicle-image" alt="Vehicle Image" onclick="showImageModal(${index}, ${vehicle.id})" style="cursor: pointer;">`).join('')}
-                                ${vehicle.images.length > 5 ? `<div style="width: 80px; height: 60px; background: #F0F0F0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #565959;">+${vehicle.images.length - 5}</div>` : ''}
-                            </div>
-                        ` : ''}
                         
                         <div class="actions">
                             <button class="btn btn-edit" onclick="editVehicle(${vehicle.id})">Edit</button>
                             <button class="btn btn-toggle" onclick="toggleStatus(${vehicle.id})">${vehicle.available ? 'Deactivate' : 'Activate'}</button>
+                            <button class="btn btn-promote ${vehicle.promoted ? 'btn-promoted' : ''}" onclick="promoteVehicle(${vehicle.id})">${vehicle.promoted ? 'Promoted ✓' : 'Promote'}</button>
+                            <button class="btn btn-delete" onclick="deleteVehicle(${vehicle.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function updateStats(data) {
+            document.getElementById('total-vehicles').textContent = data.total || 0;
+            document.getElementById('active-vehicles').textContent = data.active || 0;
+            document.getElementById('total-clicks').textContent = data.vehicles ? data.vehicles.reduce((sum, v) => sum + (v.click_count || 0), 0) : 0;
+        }
+
+        function editVehicle(id) {
+            window.location.href = `/edit-vehicle/${id}/`;
+        }
+
+        function toggleStatus(id) {
+            fetch(`/toggle-vehicle-status/${id}/`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadVehicles();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+
+        function deleteVehicle(id) {
+            if (confirm('Are you sure you want to delete this vehicle?')) {
+                fetch(`/delete-vehicle/${id}/`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadVehicles();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+
+        function promoteVehicle(vehicleId) {
+            // Load available promotion plans
+            fetch('/api/get-promotion-plans/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.plans && data.plans.length > 0) {
+                    showPromoteModal(vehicleId, data.plans);
+                } else {
+                    alert('No promotion plans available. Please contact admin.');
+                }
+            })
+            .catch(error => {
+                alert('Error loading promotion plans');
+            });
+        }
+
+        function showPromoteModal(vehicleId, plans) {
+            let modalHtml = `
+                <div id="promote-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 15px; padding: 2rem; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h2 style="color: #6f42c1; margin: 0;">🚀 Promote Vehicle</h2>
+                            <button onclick="closePromoteModal()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                        </div>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">Available Plans:</label>
+                            <select id="plan-select" onchange="updateCalculation()" style="width: 100%; padding: 0.8rem; border: 2px solid #6f42c1; border-radius: 8px; font-size: 1rem;">
+                                <option value="">Select a plan</option>`;
+            
+            plans.forEach(plan => {
+                modalHtml += `<option value="${plan.duration_days},${plan.price_per_day}">${plan.duration_days} ${plan.duration_days == 1 ? 'Day' : 'Days'} - ₹${plan.price_per_day}/day</option>`;
+            });
+            
+            modalHtml += `
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">How many days?</label>
+                            <input type="number" id="days-input" min="1" value="1" onchange="updateCalculation()" style="width: 100%; padding: 0.8rem; border: 2px solid #6f42c1; border-radius: 8px; font-size: 1rem;">
+                        </div>
+                        
+                        <div id="calculation" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #6f42c1;">
+                            <p style="margin: 0; color: #333;">Select a plan to see calculation</p>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button onclick="confirmPromotion(${vehicleId})" class="btn" style="background: #6f42c1; color: white; padding: 1rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">Confirm Promotion</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function updateCalculation() {
+            const planSelect = document.getElementById('plan-select');
+            const daysInput = document.getElementById('days-input');
+            const calculation = document.getElementById('calculation');
+            
+            if (planSelect.value && daysInput.value) {
+                const [planDays, pricePerDay] = planSelect.value.split(',');
+                const selectedDays = parseInt(daysInput.value);
+                const totalAmount = selectedDays * parseInt(pricePerDay);
+                
+                calculation.innerHTML = `
+                    <p style="margin: 0 0 0.5rem 0; color: #333;"><strong>Plan:</strong> ${planDays} ${planDays == 1 ? 'Day' : 'Days'} - ₹${pricePerDay}/day</p>
+                    <p style="margin: 0 0 0.5rem 0; color: #333;"><strong>Selected Days:</strong> ${selectedDays}</p>
+                    <p style="margin: 0; color: #6f42c1; font-size: 1.2rem; font-weight: bold;"><strong>Total Amount: ₹${totalAmount}</strong></p>
+                `;
+            } else {
+                calculation.innerHTML = '<p style="margin: 0; color: #333;">Select a plan and enter days to see calculation</p>';
+            }
+        }
+
+        function confirmPromotion(vehicleId) {
+            const planSelect = document.getElementById('plan-select');
+            const daysInput = document.getElementById('days-input');
+            
+            if (!planSelect.value || !daysInput.value) {
+                alert('Please select a plan and enter number of days');
+                return;
+            }
+            
+            const [planDays, pricePerDay] = planSelect.value.split(',');
+            const selectedDays = parseInt(daysInput.value);
+            const totalAmount = selectedDays * parseInt(pricePerDay);
+            
+            if (confirm(`Confirm promotion?\n\nDays: ${selectedDays}\nTotal Amount: ₹${totalAmount}\n\nNote: Promotion will automatically end after ${selectedDays} days (24 hours each).`)) {
+                const formData = new FormData();
+                formData.append('days', selectedDays);
+                formData.append('price_per_day', pricePerDay);
+                formData.append('total_amount', totalAmount);
+                
+                fetch(`/promote-vehicle/${vehicleId}/`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Vehicle promoted successfully!\n\nDuration: ${selectedDays} days\nAmount: ₹${totalAmount}\n\nYour vehicle will be featured for ${selectedDays} days.`);
+                        closePromoteModal();
+                        loadVehicles();
+                    } else {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    alert('Error promoting vehicle');
+                });
+            }
+        }
+
+        function closePromoteModal() {
+            const modal = document.getElementById('promote-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+    </script>
+</body>
+</html>
+                            <button class="btn btn-delete" onclick="deleteVehicle(${vehicle.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function updateStats(data) {
+            document.getElementById('total-vehicles').textContent = data.total || 0;
+            document.getElementById('active-vehicles').textContent = data.active || 0;
+            document.getElementById('total-clicks').textContent = data.vehicles ? data.vehicles.reduce((sum, v) => sum + (v.click_count || 0), 0) : 0;
+        }
+
+        function editVehicle(id) {
+            window.location.href = `/edit-vehicle/${id}/`;
+        }
+
+        function toggleStatus(id) {
+            fetch(`/toggle-vehicle-status/${id}/`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadVehicles();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+
+        function deleteVehicle(id) {
+            if (confirm('Are you sure you want to delete this vehicle?')) {
+                fetch(`/delete-vehicle/${id}/`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadVehicles();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+
+        function promoteVehicle(vehicleId) {
+            // Load available promotion plans
+            fetch('/api/get-promotion-plans/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.plans && data.plans.length > 0) {
+                    showPromoteModal(vehicleId, data.plans);
+                } else {
+                    alert('No promotion plans available. Please contact admin.');
+                }
+            })
+            .catch(error => {
+                alert('Error loading promotion plans');
+            });
+        }
+
+        function showPromoteModal(vehicleId, plans) {
+            let modalHtml = `
+                <div id="promote-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 15px; padding: 2rem; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h2 style="color: #6f42c1; margin: 0;">🚀 Promote Vehicle</h2>
+                            <button onclick="closePromoteModal()" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">&times;</button>
+                        </div>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">Available Plans:</label>
+                            <select id="plan-select" onchange="updateCalculation()" style="width: 100%; padding: 0.8rem; border: 2px solid #6f42c1; border-radius: 8px; font-size: 1rem;">
+                                <option value="">Select a plan</option>`;
+            
+            plans.forEach(plan => {
+                modalHtml += `<option value="${plan.duration_days},${plan.price_per_day}">${plan.duration_days} ${plan.duration_days == 1 ? 'Day' : 'Days'} - ₹${plan.price_per_day}/day</option>`;
+            });
+            
+            modalHtml += `
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">How many days?</label>
+                            <input type="number" id="days-input" min="1" value="1" onchange="updateCalculation()" style="width: 100%; padding: 0.8rem; border: 2px solid #6f42c1; border-radius: 8px; font-size: 1rem;">
+                        </div>
+                        
+                        <div id="calculation" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #6f42c1;">
+                            <p style="margin: 0; color: #333;">Select a plan to see calculation</p>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button onclick="confirmPromotion(${vehicleId})" class="btn" style="background: #6f42c1; color: white; padding: 1rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">Confirm Promotion</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function updateCalculation() {
+            const planSelect = document.getElementById('plan-select');
+            const daysInput = document.getElementById('days-input');
+            const calculation = document.getElementById('calculation');
+            
+            if (planSelect.value && daysInput.value) {
+                const [planDays, pricePerDay] = planSelect.value.split(',');
+                const selectedDays = parseInt(daysInput.value);
+                const totalAmount = selectedDays * parseInt(pricePerDay);
+                
+                calculation.innerHTML = `
+                    <p style="margin: 0 0 0.5rem 0; color: #333;"><strong>Plan:</strong> ${planDays} ${planDays == 1 ? 'Day' : 'Days'} - ₹${pricePerDay}/day</p>
+                    <p style="margin: 0 0 0.5rem 0; color: #333;"><strong>Selected Days:</strong> ${selectedDays}</p>
+                    <p style="margin: 0; color: #6f42c1; font-size: 1.2rem; font-weight: bold;"><strong>Total Amount: ₹${totalAmount}</strong></p>
+                `;
+            } else {
+                calculation.innerHTML = '<p style="margin: 0; color: #333;">Select a plan and enter days to see calculation</p>';
+            }
+        }
+
+        function confirmPromotion(vehicleId) {
+            const planSelect = document.getElementById('plan-select');
+            const daysInput = document.getElementById('days-input');
+            
+            if (!planSelect.value || !daysInput.value) {
+                alert('Please select a plan and enter number of days');
+                return;
+            }
+            
+            const [planDays, pricePerDay] = planSelect.value.split(',');
+            const selectedDays = parseInt(daysInput.value);
+            const totalAmount = selectedDays * parseInt(pricePerDay);
+            
+            if (confirm(`Confirm promotion?\n\nDays: ${selectedDays}\nTotal Amount: ₹${totalAmount}\n\nNote: Promotion will automatically end after ${selectedDays} days (24 hours each).`)) {
+                const formData = new FormData();
+                formData.append('days', selectedDays);
+                formData.append('price_per_day', pricePerDay);
+                formData.append('total_amount', totalAmount);
+                
+                fetch(`/promote-vehicle/${vehicleId}/`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Vehicle promoted successfully!\n\nDuration: ${selectedDays} days\nAmount: ₹${totalAmount}\n\nYour vehicle will be featured for ${selectedDays} days.`);
+                        closePromoteModal();
+                        loadVehicles();
+                    } else {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    alert('Error promoting vehicle');
+                });
+            }
+        }
+
+        function closePromoteModal() {
+            const modal = document.getElementById('promote-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
                             <button class="btn btn-delete" onclick="deleteVehicle(${vehicle.id})">Delete</button>
                         </div>
                     </div>
@@ -336,70 +615,7 @@
         }
 
         function editVehicle(vehicleId) {
-            const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
-            
-            modal.innerHTML = `
-                <div style="background: white; border-radius: 8px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                    <h3 style="margin: 0 0 20px 0;">Edit Vehicle</h3>
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-weight: 500; margin-bottom: 4px;">Year:</label>
-                        <input type="number" id="edit-year" style="width: 100%; padding: 8px; border: 1px solid #DDD; border-radius: 4px;">
-                    </div>
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-weight: 500; margin-bottom: 4px;">Per Hour Price (₹):</label>
-                        <input type="number" id="edit-hour-price" style="width: 100%; padding: 8px; border: 1px solid #DDD; border-radius: 4px;">
-                    </div>
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-weight: 500; margin-bottom: 4px;">Per Day Price (₹):</label>
-                        <input type="number" id="edit-day-price" style="width: 100%; padding: 8px; border: 1px solid #DDD; border-radius: 4px;">
-                    </div>
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-weight: 500; margin-bottom: 4px;">Pincode:</label>
-                        <input type="text" id="edit-pincode" style="width: 100%; padding: 8px; border: 1px solid #DDD; border-radius: 4px;">
-                    </div>
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-weight: 500; margin-bottom: 4px;">Village:</label>
-                        <input type="text" id="edit-village" style="width: 100%; padding: 8px; border: 1px solid #DDD; border-radius: 4px;">
-                    </div>
-                    <div style="display: flex; gap: 8px; margin-top: 20px;">
-                        <button onclick="saveEdit(${vehicleId})" style="background: #007600; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; flex: 1;">Save</button>
-                        <button onclick="closeModal()" style="background: #D00; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; flex: 1;">Cancel</button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-        }
-
-        function saveEdit(vehicleId) {
-            const formData = new FormData();
-            formData.append('year', document.getElementById('edit-year').value);
-            formData.append('per_hour_price', document.getElementById('edit-hour-price').value);
-            formData.append('per_day_price', document.getElementById('edit-day-price').value);
-            formData.append('pincode', document.getElementById('edit-pincode').value);
-            formData.append('village', document.getElementById('edit-village').value);
-            
-            fetch(`/edit-vehicle/${vehicleId}/`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Vehicle updated successfully');
-                    closeModal();
-                    loadVehicles();
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            })
-            .catch(error => {
-                alert('Error updating vehicle');
-            });
+            alert('Edit functionality - Vehicle ID: ' + vehicleId);
         }
 
         function toggleStatus(vehicleId) {
@@ -416,44 +632,47 @@
                 } else {
                     alert('Error updating status');
                 }
-            })
-            .catch(error => {
-                alert('Error updating status');
             });
         }
 
-        function deleteVehicle(vehicleId) {
-            if (confirm('Are you sure you want to delete this vehicle? This action cannot be undone.')) {
-                fetch(`/delete-vehicle/${vehicleId}/`, {
+        function promoteVehicle(vehicleId) {
+            if (confirm('Promote this vehicle? This will make it appear at the top of search results.')) {
+                fetch(`/seller-promote/${vehicleId}/`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'X-CSRFToken': getCookie('csrftoken')
                     }
                 })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    console.log('Response data:', data);
                     if (data.success) {
-                        alert('Vehicle deleted successfully');
+                        alert('Vehicle promoted successfully!');
                         loadVehicles();
                     } else {
-                        alert('Error: ' + (data.error || 'Unknown error'));
+                        alert('Error: ' + data.error);
                     }
-                })
-                .catch(error => {
-                    console.error('Delete error:', error);
-                    alert('Error deleting vehicle: ' + error.message);
                 });
             }
         }
 
-        function closeModal() {
-            const modal = document.querySelector('[style*="position: fixed"]');
-            if (modal) modal.remove();
+        function deleteVehicle(vehicleId) {
+            if (confirm('Are you sure you want to delete this vehicle?')) {
+                fetch(`/delete-vehicle/${vehicleId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Vehicle deleted successfully');
+                        loadVehicles();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
         }
 
         function getCookie(name) {
@@ -469,52 +688,6 @@
                 }
             }
             return cookieValue;
-        }
-
-        function showImageModal(imageIndex, vehicleId) {
-            const vehicleImages = vehicleImagesData[vehicleId] || [];
-            if (vehicleImages.length === 0) return;
-            
-            const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 2000;';
-            
-            modal.innerHTML = `
-                <div style="position: relative; max-width: 90%; max-height: 90%; display: flex; align-items: center;">
-                    <button onclick="prevImage()" style="position: absolute; left: -50px; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; z-index: 10;">‹</button>
-                    <img id="modal-image" src="${vehicleImages[imageIndex]}" style="max-width: 100%; max-height: 100%; border-radius: 8px;">
-                    <button onclick="nextImage()" style="position: absolute; right: -50px; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; z-index: 10;">›</button>
-                    <button onclick="closeImageModal()" style="position: absolute; top: -10px; right: -10px; background: #D00; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px;">&times;</button>
-                    <div style="position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); color: white; font-size: 14px;">${imageIndex + 1} / ${vehicleImages.length}</div>
-                </div>
-            `;
-            
-            window.currentImageIndex = imageIndex;
-            window.modalImages = vehicleImages;
-            
-            document.body.appendChild(modal);
-            
-            window.prevImage = function() {
-                window.currentImageIndex = (window.currentImageIndex - 1 + window.modalImages.length) % window.modalImages.length;
-                const modalImage = document.getElementById('modal-image');
-                if (modalImage) {
-                    modalImage.src = window.modalImages[window.currentImageIndex];
-                    modal.querySelector('div[style*="bottom: -30px"]').textContent = `${window.currentImageIndex + 1} / ${window.modalImages.length}`;
-                }
-            };
-            
-            window.nextImage = function() {
-                window.currentImageIndex = (window.currentImageIndex + 1) % window.modalImages.length;
-                const modalImage = document.getElementById('modal-image');
-                if (modalImage) {
-                    modalImage.src = window.modalImages[window.currentImageIndex];
-                    modal.querySelector('div[style*="bottom: -30px"]').textContent = `${window.currentImageIndex + 1} / ${window.modalImages.length}`;
-                }
-            };
-        }
-
-        function closeImageModal() {
-            const modal = document.querySelector('[style*="position: fixed"][style*="z-index: 2000"]');
-            if (modal) modal.remove();
         }
     </script>
 </body>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Brands - {{ category.name }}</title>
+    <style>
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .brand-list { margin-top: 30px; }
+        .brand-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 4px; }
+        .brand-image { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .breadcrumb { padding: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/manage-groups/">Groups</a> > 
+            <a href="/manage-categories/{{ category.group.id }}/">{{ category.group.name }}</a> > 
+            {{ category.name }}
+        </div>
+        
+        <h1>Manage Brands for {{ category.name }}</h1>
+        
+        <form id="brandForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Brand Name:</label>
+                <input type="text" id="brandName" required>
+            </div>
+            <div class="form-group">
+                <label>Brand Image:</label>
+                <input type="file" id="brandImage" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn">Create Brand</button>
+        </form>
+
+        <div class="brand-list">
+            <h2>Existing Brands</h2>
+            {% for brand in brands %}
+            <div class="brand-item">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="{{ brand.image.url }}" alt="{{ brand.name }}" class="brand-image">
+                    <span>{{ brand.name }} ({{ brand.models.count }} models)</span>
+                </div>
+                <div>
+                    <button onclick="location.href='/manage-models/{{ brand.id }}/'" class="btn">Manage Models</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('brandForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('name', document.getElementById('brandName').value);
+        formData.append('image', document.getElementById('brandImage').files[0]);
+        
+        fetch('/manage-brands/{{ category.id }}/', {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    });
+    </script>
+</body>
+</html>

@@ -14,8 +14,8 @@
         body {
             font-family: 'Arial', sans-serif;
             line-height: 1.6;
-            color: #2c1810;
-            background: #faf8f5;
+            color: #e0e0e0;
+            background: #0a0a0a;
         }
 
         .container {
@@ -25,13 +25,14 @@
         }
 
         header {
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(44, 24, 16, 0.95) 100%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
             padding: 1rem 0;
             position: fixed;
             top: 0;
             width: 100%;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 20px rgba(255, 215, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
         }
 
         .navbar {
@@ -129,7 +130,7 @@
         }
 
         .hero {
-            background: linear-gradient(rgba(44, 24, 16, 0.7), rgba(44, 24, 16, 0.7)), url('https://i.pinimg.com/1200x/94/58/33/9458333b50f48df21804133302bbd7b2.jpg');
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://i.pinimg.com/1200x/94/58/33/9458333b50f48df21804133302bbd7b2.jpg');
             background-size: cover;
             background-position: center;
             padding: 4rem 1rem;
@@ -197,20 +198,20 @@
 
         .why-choose {
             padding: 4rem 1rem;
-            background: #f8f9fa;
+            background: #0f0f0f;
         }
 
         .why-choose h2 {
             text-align: center;
             font-size: 2.5rem;
             margin-bottom: 1rem;
-            color: #2c1810;
+            color: #FFD700;
         }
 
         .subtitle {
             text-align: center;
             font-size: 1.2rem;
-            color: #666;
+            color: #b0b0b0;
             margin-bottom: 3rem;
         }
 
@@ -221,34 +222,42 @@
         }
 
         .feature-card {
-            background: white;
+            background: #1a1a1a;
             padding: 2rem;
             border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.1);
             text-align: center;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+            border-color: #FFD700;
         }
 
         .feature-card h3 {
-            color: #2c1810;
+            color: #FFD700;
             margin-bottom: 1rem;
             font-size: 1.3rem;
         }
 
         .feature-card p {
-            color: #666;
+            color: #b0b0b0;
             line-height: 1.6;
         }
 
         .how-it-works {
             padding: 4rem 1rem;
-            background: white;
+            background: #0a0a0a;
         }
 
         .how-it-works h2 {
             text-align: center;
             font-size: 2.5rem;
             margin-bottom: 1rem;
-            color: #2c1810;
+            color: #FFD700;
         }
 
         .steps {
@@ -277,20 +286,21 @@
         }
 
         .step h3 {
-            color: #2c1810;
+            color: #FFD700;
             margin-bottom: 1rem;
         }
 
         .step p {
-            color: #666;
+            color: #b0b0b0;
             line-height: 1.6;
         }
 
         .cta-section {
             padding: 4rem 1rem;
-            background: linear-gradient(135deg, #2c1810 0%, #3d2817 100%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
             color: white;
             text-align: center;
+            border-top: 1px solid rgba(255, 215, 0, 0.2);
         }
 
         .cta-section h2 {
@@ -332,9 +342,10 @@
         }
 
         footer {
-            background: #1a0f0a;
-            color: #f5f5dc;
+            background: #000000;
+            color: #e0e0e0;
             padding: 3rem 1rem 1rem;
+            border-top: 1px solid rgba(255, 215, 0, 0.2);
         }
 
         .footer-content {
@@ -480,7 +491,7 @@
                     <li><a href="/seller-vehicles/" class="btn-login">My Vehicles</a></li>
                     <li><a href="/logout/" class="btn-login" style="background: linear-gradient(135deg, #DC143C 0%, #B22222 100%); color: #FFF;">Logout</a></li>
                 {% else %}
-                    <li><a href="/phone-check/" class="btn-login">User Login</a></li>
+                    <li><a href="/login/" class="btn-login">User Login</a></li>
                 {% endif %}
             </ul>
             <div class="hamburger">

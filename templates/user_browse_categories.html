@@ -139,6 +139,15 @@
             padding: 12px;
             margin-bottom: 12px;
             background: white;
+            position: relative;
+        }
+        .heart-icon {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10;
         }
         .vehicle-header {
             font-size: 16px;
@@ -167,6 +176,39 @@
             font-size: 12px;
             color: #565959;
             margin-bottom: 8px;
+        }
+        .cost-prediction {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .cost-prediction-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #424242;
+            margin-bottom: 4px;
+        }
+        .cost-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1976d2;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #90caf9;
         }
         .contact-info {
             color: #007600;
@@ -222,6 +264,8 @@
         <div class="header-top">
             <div class="logo">GoWheels</div>
             <div class="user-actions">
+                <button class="action-btn" onclick="window.location.href='/wishlist/'">❤️ Wishlist</button>
+                <button class="action-btn" onclick="window.location.href='/user-sponsor/'">📢 Sponsor</button>
                 <button class="action-btn" onclick="showHistory()">History</button>
                 <button class="action-btn" onclick="window.location.href='/seller-vehicles/'">My Vehicles</button>
                 <button class="action-btn" onclick="window.location.href='/seller-dashboard/'">Add Vehicle</button>
@@ -238,6 +282,12 @@
     </div>
 
     <div class="container">
+        <!-- Rent/Buy Toggle -->
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; justify-content: center;">
+            <button id="rent-btn" class="listing-type-btn active" onclick="setListingType('rent')" style="flex: 1; max-width: 200px; padding: 12px; border: 2px solid #667eea; border-radius: 8px; background: #667eea; color: white; font-size: 16px; font-weight: 600; cursor: pointer;">🏠 Rent</button>
+            <button id="sell-btn" class="listing-type-btn" onclick="setListingType('sell')" style="flex: 1; max-width: 200px; padding: 12px; border: 2px solid #667eea; border-radius: 8px; background: white; color: #667eea; font-size: 16px; font-weight: 600; cursor: pointer;">💰 Buy</button>
+        </div>
+        
         <!-- Groups Screen -->
         <div id="groups-screen" class="screen active">
             <div class="screen-header">
@@ -297,6 +347,150 @@
         let currentCategory = '';
         let currentBrand = '';
         let allData = {};
+        let wishlistIds = [];
+        let isLoggedIn = false;
+        let currentListingType = 'rent';
+
+        function calculateCostPrediction(price, year, listingType, vehicle) {
+            if (listingType !== 'sell' || !price || price <= 0) return null;
+            
+            // Check if manual values are provided
+            const hasManualValues = vehicle.manual_maintenance_cost || vehicle.manual_fuel_cost || vehicle.manual_insurance_cost;
+            
+            let maintenance2Year, fuelCost2Year, insurance2Year;
+            
+            if (hasManualValues) {
+                // Use manual values if provided
+                maintenance2Year = parseFloat(vehicle.manual_maintenance_cost) || 0;
+                fuelCost2Year = parseFloat(vehicle.manual_fuel_cost) || 0;
+                insurance2Year = parseFloat(vehicle.manual_insurance_cost) || 0;
+            } else {
+                // Calculate automatically
+                const currentYear = new Date().getFullYear();
+                const vehicleAge = currentYear - year;
+                
+                // Maintenance cost (increases with age)
+                const baseMaintenance = price * 0.04; // 4% of vehicle price
+                const ageFactor = 1 + (vehicleAge * 0.05); // 5% increase per year of age
+                maintenance2Year = Math.round(baseMaintenance * ageFactor);
+                
+                // Fuel cost estimate (assuming 10,000 km/year, 15 km/l, ₹100/l)
+                fuelCost2Year = Math.round((10000 * 2 / 15) * 100);
+                
+                // Insurance (2-3% of vehicle price per year)
+                insurance2Year = Math.round(price * 0.025 * 2);
+            }
+            
+            // Total ownership cost
+            const totalCost = price + maintenance2Year + fuelCost2Year + insurance2Year;
+            
+            return {
+                price: price,
+                maintenance: maintenance2Year,
+                fuel: fuelCost2Year,
+                insurance: insurance2Year,
+                total: totalCost,
+                isManual: hasManualValues
+            };
+        }
+
+        function formatCurrency(amount) {
+            return '₹' + amount.toLocaleString('en-IN');
+        }
+
+        function setListingType(type) {
+            currentListingType = type;
+            document.getElementById('rent-btn').style.background = type === 'rent' ? '#667eea' : 'white';
+            document.getElementById('rent-btn').style.color = type === 'rent' ? 'white' : '#667eea';
+            document.getElementById('sell-btn').style.background = type === 'sell' ? '#667eea' : 'white';
+            document.getElementById('sell-btn').style.color = type === 'sell' ? 'white' : '#667eea';
+        }
+
+        // Check if user is logged in
+        fetch('/api/get-user-profile/')
+        .then(r => r.json())
+        .then(data => {
+            isLoggedIn = data.success;
+            if (isLoggedIn) {
+                // Load wishlist only if logged in
+                fetch('/api/check-wishlist/')
+                .then(r => r.json())
+                .then(data => { wishlistIds = data.wishlist_ids || []; });
+            }
+        });
+
+        // Show referral popup on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            showReferralPopup();
+        });
+
+        function showReferralPopup() {
+            // Check if user is logged in first
+            fetch('/api/get-user-profile/')
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) return; // Not logged in, skip popup
+                
+                fetch('/api/referral-stats/')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) return;
+                    
+                    fetch('/referral/')
+                    .then(r => r.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const code = doc.getElementById('referralCode')?.textContent || 'XXXXXX';
+                        
+                        const popup = document.createElement('div');
+                        popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:2rem;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,0.3);z-index:9999;max-width:400px;width:90%;animation:bounce 0.6s ease;';
+                        popup.innerHTML = `
+                            <style>
+                                @keyframes bounce {
+                                    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+                                    50% { transform: translate(-50%, -50%) scale(1.05); }
+                                }
+                                @keyframes shake {
+                                    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+                                    25% { transform: translate(-50%, -50%) rotate(-5deg); }
+                                    75% { transform: translate(-50%, -50%) rotate(5deg); }
+                                }
+                            </style>
+                            <div style="text-align:center;">
+                                <div style="font-size:48px;margin-bottom:1rem;animation:bounce 1s infinite;">🎁</div>
+                                <h2 style="margin-bottom:1rem;color:#333;">Earn ₹50 Rewards!</h2>
+                                <p style="color:#666;margin-bottom:1.5rem;">Share your referral code and both get ₹50!</p>
+                                <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:1rem;border-radius:10px;margin-bottom:1rem;">
+                                    <div style="font-size:12px;opacity:0.9;">Your Code</div>
+                                    <div style="font-size:28px;font-weight:bold;letter-spacing:4px;">${code}</div>
+                                </div>
+                                <button onclick="window.open('https://wa.me/?text=Join GoWheels using code ${code} and get ₹50!')" style="background:#25D366;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;width:100%;margin-bottom:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Share on WhatsApp</button>
+                                <button onclick="navigator.clipboard.writeText('${code}');alert('Copied!')" style="background:#667eea;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;width:100%;margin-bottom:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Copy Code</button>
+                                <button onclick="this.parentElement.parentElement.remove();document.getElementById('overlay2').remove();showReferralIcon()" style="background:#f5f5f5;color:#666;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;width:100%;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Later</button>
+                            </div>
+                        `;
+                        
+                        const overlay = document.createElement('div');
+                        overlay.id = 'overlay2';
+                        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9998;';
+                        overlay.onclick = () => { popup.remove(); overlay.remove(); };
+                        
+                        document.body.appendChild(overlay);
+                        document.body.appendChild(popup);
+                    });
+                });
+            });
+        }
+
+        function showReferralIcon() {
+            const icon = document.createElement('div');
+            icon.id = 'referralIcon';
+            icon.style.cssText = 'position:fixed;bottom:20px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#FFD700,#FFA500);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:9999;animation:bounce 1s infinite;';
+            icon.innerHTML = '🎁';
+            icon.onclick = showReferralPopup;
+            document.body.appendChild(icon);
+        }
 
         // Load user profile data
         fetch('/api/get-user-profile/')
@@ -450,7 +644,7 @@
             grid.innerHTML = '<p style="color: #565959; text-align: center; padding: 32px;">Loading vehicles...</p>';
             
             // Fetch seller vehicles that match the admin category-brand-model names
-            fetch('/get-vehicles/?cat=' + encodeURIComponent(currentCategory) + '&br=' + encodeURIComponent(currentBrand) + '&mod=' + encodeURIComponent(modelName))
+            fetch('/get-vehicles/?cat=' + encodeURIComponent(currentCategory) + '&br=' + encodeURIComponent(currentBrand) + '&mod=' + encodeURIComponent(modelName) + '&listing_type=' + currentListingType)
             .then(response => response.json())
             .then(data => {
                 let html = '';
@@ -463,8 +657,11 @@
                         // Save to history when vehicle is displayed
                         saveToHistory(vehicle);
                         
+                        const isWishlisted = wishlistIds.includes(vehicle.id);
+                        const listingBadge = vehicle.listing_type === 'sell' ? '<span style="background:#4CAF50;color:white;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-left:8px;">💰 FOR SALE</span>' : '<span style="background:#667eea;color:white;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-left:8px;">🏠 FOR RENT</span>';
                         html += `<div class="vehicle-card">
-                            <div class="vehicle-header">${vehicle.brand_name} ${vehicle.model_name}</div>`;
+                            <span class="heart-icon" onclick="toggleWishlist(${vehicle.id}, this)">${isWishlisted ? '❤️' : '🤍'}</span>
+                            <div class="vehicle-header">${vehicle.brand_name} ${vehicle.model_name} ${listingBadge}</div>`;
                         
                         if (vehicle.images && vehicle.images.length > 0) {
                             html += '<div class="vehicle-images">';
@@ -474,21 +671,46 @@
                             html += '</div>';
                         }
                         
+                        // Calculate cost prediction for sell listings
+                        const sellPrice = vehicle.listing_type === 'sell' ? parseFloat(vehicle.per_day_price || vehicle.price || 0) : 0;
+                        const costPrediction = sellPrice > 0 ? calculateCostPrediction(sellPrice, vehicle.year, vehicle.listing_type, vehicle) : null;
+                        
                         html += `<div class="vehicle-details">
-                                <div><strong>Year:</strong> ${vehicle.year}</div>
-                                <div><strong>Per Hour:</strong> ₹${vehicle.per_hour_price > 0 ? vehicle.per_hour_price : '0'}</div>
-                                <div><strong>Per Day:</strong> ₹${vehicle.per_day_price > 0 ? vehicle.per_day_price : '0'}</div>
-                                <div><strong>Pincode:</strong> ${vehicle.pincode || 'Not specified'}</div>
+                                <div><strong>Year:</strong> ${vehicle.year}</div>`;
+                        
+                        // Show appropriate pricing based on listing type
+                        if (vehicle.listing_type === 'sell') {
+                            html += `<div><strong>Price:</strong> ₹${vehicle.per_day_price > 0 ? vehicle.per_day_price : (vehicle.price || '0')}</div>`;
+                        } else {
+                            html += `<div><strong>Per Hour:</strong> ₹${vehicle.per_hour_price > 0 ? vehicle.per_hour_price : '0'}</div>
+                                    <div><strong>Per Day:</strong> ₹${vehicle.per_day_price > 0 ? vehicle.per_day_price : '0'}</div>`;
+                        }
+                        
+                        html += `<div><strong>Pincode:</strong> ${vehicle.pincode || 'Not specified'}</div>
                                 <div><strong>Village:</strong> ${vehicle.village || 'Not specified'}</div>
                                 <div><strong>Owner:</strong> ${vehicle.owner_name || 'Not available'}</div>
-                            </div>
-                            <div class="contact-info">
+                            </div>`;
+                        
+                        // Show cost prediction only for sell listings
+                        if (costPrediction) {
+                            const predictionType = costPrediction.isManual ? '✏️ Seller Provided' : '🤖 Auto-Calculated';
+                            html += `<div class="cost-prediction">
+                                <div class="cost-prediction-title">📊 2-Year Ownership Cost <span style="font-size: 10px; opacity: 0.8;">(${predictionType})</span></div>
+                                <div class="cost-item"><span>Vehicle Price:</span><span>${formatCurrency(costPrediction.price)}</span></div>
+                                <div class="cost-item"><span>Maintenance (2 years):</span><span>${formatCurrency(costPrediction.maintenance)}</span></div>
+                                <div class="cost-item"><span>Fuel Cost (2 years):</span><span>${formatCurrency(costPrediction.fuel)}</span></div>
+                                <div class="cost-item"><span>Insurance (2 years):</span><span>${formatCurrency(costPrediction.insurance)}</span></div>
+                                <div class="cost-total"><span>Total Ownership Cost:</span><span>${formatCurrency(costPrediction.total)}</span></div>
+                            </div>`;
+                        }
+                        
+                        html += `<div class="contact-info">
                                 <span id="phone-${vehicle.id}" style="display: none;">Contact: ${vehicle.seller_phone || 'Not available'}</span>
                                 <button id="show-phone-${vehicle.id}" onclick="showPhone('${vehicle.id}', '${vehicle.seller_phone}')" style="background: #007600; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Click to see phone</button>
                             </div>
-                            <div class="action-buttons">
-                                <span onclick="callSeller('${vehicle.seller_phone}')" style="cursor: pointer; font-size: 24px;">📞</span>
-                                <span onclick="whatsappSeller('${vehicle.seller_phone}', '${vehicle.brand_name} ${vehicle.model_name}')" style="cursor: pointer; font-size: 24px;">💬</span>
+                            <div class="action-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                <button onclick="callSeller('${vehicle.seller_phone}')" class="btn btn-call" style="flex: 1;">📞 Call</button>
+                                <button onclick="whatsappSeller('${vehicle.seller_phone}', '${vehicle.brand_name} ${vehicle.model_name}')" class="btn btn-whatsapp" style="flex: 1;">💬 WhatsApp</button>
                             </div>
                         </div>`;
                     });
@@ -736,7 +958,7 @@
         function searchByPincode() {
             const searchPincode = document.getElementById('searchPincode').value.trim();
             if (searchPincode) {
-                fetch('/get-vehicles/?pincode=' + searchPincode.trim())
+                fetch('/get-vehicles/?pincode=' + searchPincode.trim() + '&listing_type=' + currentListingType)
                 .then(response => response.json())
                 .then(data => {
                     if (data.vehicles && data.vehicles.length > 0) {
@@ -765,8 +987,11 @@
                 // Save to history when vehicle is displayed
                 saveToHistory(vehicle);
                 
+                const isWishlisted = wishlistIds.includes(vehicle.id);
+                const listingBadge = vehicle.listing_type === 'sell' ? '<span style="background:#4CAF50;color:white;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-left:8px;">💰 FOR SALE</span>' : '<span style="background:#667eea;color:white;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-left:8px;">🏠 FOR RENT</span>';
                 html += `<div class="vehicle-card">
-                    <div class="vehicle-header">${vehicle.brand_name} ${vehicle.model_name}</div>`;
+                    <span class="heart-icon" onclick="toggleWishlist(${vehicle.id}, this)">${isWishlisted ? '❤️' : '🤍'}</span>
+                    <div class="vehicle-header">${vehicle.brand_name} ${vehicle.model_name} ${listingBadge}</div>`;
                 
                 if (vehicle.images && vehicle.images.length > 0) {
                     html += '<div class="vehicle-images">';
@@ -776,21 +1001,46 @@
                     html += '</div>';
                 }
                 
+                // Calculate cost prediction for sell listings
+                const sellPrice = vehicle.listing_type === 'sell' ? parseFloat(vehicle.per_day_price || vehicle.price || 0) : 0;
+                const costPrediction = sellPrice > 0 ? calculateCostPrediction(sellPrice, vehicle.year, vehicle.listing_type, vehicle) : null;
+                
                 html += `<div class="vehicle-details">
-                        <div><strong>Year:</strong> ${vehicle.year}</div>
-                        <div><strong>Per Hour:</strong> ₹${vehicle.per_hour_price > 0 ? vehicle.per_hour_price : '0'}</div>
-                        <div><strong>Per Day:</strong> ₹${vehicle.per_day_price > 0 ? vehicle.per_day_price : '0'}</div>
-                        <div><strong>Pincode:</strong> ${vehicle.pincode || 'Not specified'}</div>
+                        <div><strong>Year:</strong> ${vehicle.year}</div>`;
+                
+                // Show appropriate pricing based on listing type
+                if (vehicle.listing_type === 'sell') {
+                    html += `<div><strong>Price:</strong> ₹${vehicle.per_day_price > 0 ? vehicle.per_day_price : (vehicle.price || '0')}</div>`;
+                } else {
+                    html += `<div><strong>Per Hour:</strong> ₹${vehicle.per_hour_price > 0 ? vehicle.per_hour_price : '0'}</div>
+                            <div><strong>Per Day:</strong> ₹${vehicle.per_day_price > 0 ? vehicle.per_day_price : '0'}</div>`;
+                }
+                
+                html += `<div><strong>Pincode:</strong> ${vehicle.pincode || 'Not specified'}</div>
                         <div><strong>Village:</strong> ${vehicle.village || 'Not specified'}</div>
                         <div><strong>Owner:</strong> ${vehicle.owner_name || 'Not available'}</div>
-                    </div>
-                    <div class="contact-info">
+                    </div>`;
+                
+                // Show cost prediction only for sell listings
+                if (costPrediction) {
+                    const predictionType = costPrediction.isManual ? '✏️ Seller Provided' : '🤖 Auto-Calculated';
+                    html += `<div class="cost-prediction">
+                        <div class="cost-prediction-title">📊 2-Year Ownership Cost <span style="font-size: 10px; opacity: 0.8;">(${predictionType})</span></div>
+                        <div class="cost-item"><span>Vehicle Price:</span><span>${formatCurrency(costPrediction.price)}</span></div>
+                        <div class="cost-item"><span>Maintenance (2 years):</span><span>${formatCurrency(costPrediction.maintenance)}</span></div>
+                        <div class="cost-item"><span>Fuel Cost (2 years):</span><span>${formatCurrency(costPrediction.fuel)}</span></div>
+                        <div class="cost-item"><span>Insurance (2 years):</span><span>${formatCurrency(costPrediction.insurance)}</span></div>
+                        <div class="cost-total"><span>Total Ownership Cost:</span><span>${formatCurrency(costPrediction.total)}</span></div>
+                    </div>`;
+                }
+                
+                html += `<div class="contact-info">
                         <span id="phone-${vehicle.id}" style="display: none;">Contact: ${vehicle.seller_phone || 'Not available'}</span>
                         <button id="show-phone-${vehicle.id}" onclick="showPhone('${vehicle.id}', '${vehicle.seller_phone}')" style="background: #007600; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Click to see phone</button>
                     </div>
-                    <div class="action-buttons">
-                        <span onclick="callSeller('${vehicle.seller_phone}')" style="cursor: pointer; font-size: 24px;">📞</span>
-                        <span onclick="whatsappSeller('${vehicle.seller_phone}', '${vehicle.brand_name} ${vehicle.model_name}')" style="cursor: pointer; font-size: 24px;">💬</span>
+                    <div class="action-buttons" style="display: flex; gap: 8px; align-items: center;">
+                        <button onclick="callSeller('${vehicle.seller_phone}')" class="btn btn-call" style="flex: 1;">📞 Call</button>
+                        <button onclick="whatsappSeller('${vehicle.seller_phone}', '${vehicle.brand_name} ${vehicle.model_name}')" class="btn btn-whatsapp" style="flex: 1;">💬 WhatsApp</button>
                     </div>
                 </div>`;
             });
@@ -874,7 +1124,7 @@
         function searchAllBrandsByPincode() {
             const pincode = document.getElementById('brand-pincode-search').value.trim();
             if (pincode) {
-                fetch('/get-vehicles/?cat=' + encodeURIComponent(currentCategory) + '&pincode=' + encodeURIComponent(pincode))
+                fetch('/get-vehicles/?cat=' + encodeURIComponent(currentCategory) + '&pincode=' + encodeURIComponent(pincode) + '&listing_type=' + currentListingType)
                 .then(response => response.json())
                 .then(data => {
                     if (data.vehicles && data.vehicles.length > 0) {
@@ -894,7 +1144,7 @@
         function searchAllModelsByPincode() {
             const pincode = document.getElementById('model-pincode-search').value.trim();
             if (pincode) {
-                fetch('/get-vehicles/?cat=' + encodeURIComponent(currentCategory) + '&br=' + encodeURIComponent(currentBrand) + '&pincode=' + encodeURIComponent(pincode))
+                fetch('/get-vehicles/?cat=' + encodeURIComponent(currentCategory) + '&br=' + encodeURIComponent(currentBrand) + '&pincode=' + encodeURIComponent(pincode) + '&listing_type=' + currentListingType)
                 .then(response => response.json())
                 .then(data => {
                     if (data.vehicles && data.vehicles.length > 0) {
@@ -918,6 +1168,38 @@
                 case 'cubic_feet': return 'Cubic Feet';
                 default: return 'Unit Price';
             }
+        }
+
+        function toggleWishlist(vehicleId, element) {
+            if (!isLoggedIn) {
+                alert('Please login to add favorites');
+                window.location.href = '/login/';
+                return;
+            }
+            
+            fetch('/api/toggle-wishlist/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ vehicle_id: vehicleId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.action === 'added') {
+                        element.textContent = '❤️';
+                        wishlistIds.push(vehicleId);
+                    } else {
+                        element.textContent = '🤍';
+                        wishlistIds = wishlistIds.filter(id => id !== vehicleId);
+                    }
+                } else if (data.error === 'Not logged in') {
+                    alert('Please login to add favorites');
+                    window.location.href = '/login/';
+                }
+            });
         }
     </script>
 </body>

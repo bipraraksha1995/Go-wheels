@@ -50,7 +50,8 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'gowheels.middleware.SecurityHeadersMiddleware',  # Custom security headers
+    'gowheels.security_headers.SecurityHeadersMiddleware',  # Security headers
+    'gowheels.rate_limiting.RateLimitMiddleware',  # Rate limiting
 ]
 
 ROOT_URLCONF = 'gowheels_project.urls'
@@ -130,27 +131,16 @@ SESSION_COOKIE_NAME = '_gsid'  # Custom name (obscures Django)
 if not DEBUG:
     SESSION_COOKIE_SECURE = True  # HTTPS only in production
 
+# Disable CSRF for API endpoints
+CSRF_EXEMPT_URLS = ['/send-otp/', '/verify-otp/']
+
 # CSRF Cookie Security
-CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF token
+CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_AGE = 31536000  # 1 year
-CSRF_USE_SESSIONS = True  # Store CSRF token in session
+CSRF_USE_SESSIONS = False  # Use cookie instead of session
 if not DEBUG:
     CSRF_COOKIE_SECURE = True  # HTTPS only in production
-
-# Password Hashing with Argon2 (memory-hard, resistant to GPU/ASIC attacks)
-PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.Argon2PasswordHasher',
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-]
-
-# Argon2 parameters (tune for your hardware)
-ARGON2_PARAMETERS = {
-    'memory_cost': 512,      # MB
-    'time_cost': 2,          # Iterations
-    'parallelism': 2,        # Threads
-}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -179,23 +169,6 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
-        },
-        'APP': {
-            'client_id': config('GOOGLE_CLIENT_ID', default=''),
-            'secret': config('GOOGLE_CLIENT_SECRET', default=''),
-            'key': ''
-        }
-    },
-    'github': {
-        'SCOPE': [
-            'user',
-            'repo',
-            'read:org',
-        ],
-        'APP': {
-            'client_id': config('GITHUB_CLIENT_ID', default=''),
-            'secret': config('GITHUB_CLIENT_SECRET', default=''),
-            'key': ''
         }
     }
 }
@@ -221,3 +194,15 @@ SITE_ID = 1
 LOGIN_REDIRECT_URL = '/seller_dashboard/'
 LOGIN_URL = '/login/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+
+# Cache Configuration - Disabled for now
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
+# Session backend
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
