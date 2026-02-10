@@ -11,10 +11,7 @@
             to { transform: rotate(360deg); }
         }
         body {
-            background-image: linear-gradient(rgba(44, 24, 16, 0.8), rgba(44, 24, 16, 0.8)), url('https://i.pinimg.com/1200x/94/58/33/9458333b50f48df21804133302bbd7b2.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background: #1e1e1e;
             min-height: 100vh;
             font-family: 'Arial', sans-serif;
         }
@@ -26,12 +23,12 @@
             padding: 2rem;
         }
         .login-container {
-            background: rgba(0, 0, 0, 0.8);
+            background: #2a2a2a;
             backdrop-filter: blur(20px);
-            border-radius: 20px;
+            border-radius: 0;
             padding: 3rem;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            border: 2px solid rgba(255, 215, 0, 0.3);
+            border: 1px solid #3a3a3a;
             max-width: 450px;
             width: 100%;
         }
@@ -42,44 +39,52 @@
             display: block;
         }
         .login-card h2 {
-            font-family: 'Arial Black', Arial, sans-serif;
-            font-size: 2.2rem;
-            color: #FFD700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-family: 'Arial', sans-serif;
+            font-size: 2rem;
+            color: #ffc107;
+            text-shadow: none;
             text-align: center;
             margin-bottom: 1rem;
+            font-weight: 100;
+            letter-spacing: 5px;
+            text-transform: uppercase;
         }
         .login-card p {
-            color: #F5F5DC;
+            color: #999999;
             text-align: center;
             margin-bottom: 2rem;
-            font-size: 1.1rem;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-size: 0.9rem;
+            text-shadow: none;
+            font-weight: 300;
         }
         .input-group {
             margin-bottom: 1.5rem;
         }
         .input-group label {
             display: block;
-            color: #FFD700;
-            font-weight: 600;
+            color: #ffc107;
+            font-weight: 300;
             margin-bottom: 0.5rem;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            text-shadow: none;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
         .input-group input {
             width: 100%;
             padding: 1rem;
-            border: 2px solid rgba(255, 215, 0, 0.3);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #3a3a3a;
+            border-radius: 0;
+            background: #1e1e1e;
             color: #FFFFFF;
-            font-size: 1.1rem;
-            backdrop-filter: blur(10px);
+            font-size: 1rem;
+            backdrop-filter: none;
+            transition: all 0.3s ease;
         }
         .input-group input:focus {
             outline: none;
-            border-color: #FFD700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            border-color: #ffc107;
+            box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.2);
         }
         .otp-inputs {
             display: flex;
@@ -93,37 +98,42 @@
             text-align: center;
             font-size: 1.5rem;
             font-weight: bold;
-            border: 2px solid rgba(255, 215, 0, 0.3);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #FFD700;
+            border: 1px solid #3a3a3a;
+            border-radius: 0;
+            background: #1e1e1e;
+            color: #ffc107;
         }
         .btn-submit {
             width: 100%;
             padding: 1.2rem;
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
+            background: #ffc107;
+            color: #1e1e1e;
             border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 700;
+            border-radius: 0;
+            font-size: 0.85rem;
+            font-weight: 400;
             cursor: pointer;
-            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+            box-shadow: none;
             transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 3px;
         }
         .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(255, 215, 0, 0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 193, 7, 0.5);
+            background: #ffcd38;
         }
         .resend-text {
             text-align: center;
             margin-top: 1rem;
-            color: #F5F5DC;
+            color: #999999;
+            font-size: 0.85rem;
+            font-weight: 300;
         }
         .resend-text a {
-            color: #FFD700;
+            color: #ffc107;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 400;
         }
         .resend-text a:hover {
             text-decoration: underline;
@@ -132,12 +142,12 @@
 </head>
 <body>
     <header>
-        <nav class="navbar" style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(44, 24, 16, 0.95) 100%); backdrop-filter: blur(20px); border-bottom: 2px solid rgba(255, 215, 0, 0.3); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+        <nav class="navbar" style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 193, 7, 0.1); box-shadow: none; padding: 1.5rem;">
             <div class="nav-brand" style="text-align: left;">
-                <h1 style="margin: 0; text-align: left; font-size: 2.2rem; font-family: 'Arial Black', Arial, sans-serif; color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"><span style="display: inline-block; animation: rotate 2s linear infinite; font-size: 2.5rem;">🛞</span>GoWheels</h1>
+                <h1 style="margin: 0; text-align: left; font-size: 1.2rem; font-family: 'Arial', sans-serif; color: #ffc107; text-shadow: none; font-weight: 300; letter-spacing: 8px; text-transform: uppercase;"><span style="display: inline-block;">🛞</span>GoWheels</h1>
             </div>
-            <ul class="nav-menu" style="font-family: 'Arial', sans-serif; font-weight: 600;">
-                <li><a href="/" style="color: #FFFFFF; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Home</a></li>
+            <ul class="nav-menu" style="font-family: 'Arial', sans-serif; font-weight: 300;">
+                <li><a href="/" style="color: #999999; text-shadow: none; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;">Home</a></li>
             </ul>
         </nav>
     </header>

@@ -3,18 +3,25 @@
 <head>
     <title>Seller Vehicle Upload</title>
     <style>
-        .form-container { max-width: 800px; margin: 20px auto; padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; }
-        .image-preview, .video-preview { display: flex; gap: 10px; margin-top: 10px; }
-        .preview-item { width: 100px; height: 100px; border: 1px solid #ddd; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1e1e1e; font-family: 'Arial', sans-serif; color: #e0e0e0; }
+        .form-container { max-width: 800px; margin: 20px auto; padding: 3rem 2rem; background: #2a2a2a; border: 1px solid #3a3a3a; }
+        h2 { color: #ffc107; font-weight: 100; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 2rem; text-align: center; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 300; color: #ffc107; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 1rem; border: 1px solid #3a3a3a; background: #1e1e1e; color: #ffffff; font-size: 1rem; transition: all 0.3s ease; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #ffc107; box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.2); }
+        .image-preview, .video-preview { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .preview-item { width: 100px; height: 100px; border: 1px solid #3a3a3a; }
         .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
-        .upload-section { border: 2px dashed #ddd; padding: 20px; text-align: center; margin: 10px 0; }
-        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; }
-        .btn:hover { background: #0056b3; }
-        .error { color: red; font-size: 12px; }
-        .success { color: green; font-size: 12px; }
+        .upload-section { border: 1px solid #3a3a3a; padding: 2rem; text-align: center; margin: 10px 0; background: #1e1e1e; transition: all 0.3s ease; }
+        .upload-section:hover { border-color: #ffc107; background: rgba(255, 193, 7, 0.05); }
+        .upload-section p { color: #999999; font-size: 0.9rem; margin-top: 0.5rem; }
+        .btn { background: #ffc107; color: #1e1e1e; padding: 1.2rem 3rem; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 400; text-transform: uppercase; letter-spacing: 3px; transition: all 0.3s ease; width: 100%; }
+        .btn:hover { background: #ffcd38; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(255, 193, 7, 0.5); }
+        .error { color: #ff6b6b; font-size: 0.85rem; margin-top: 0.5rem; }
+        .success { color: #4CAF50; font-size: 0.85rem; margin-top: 0.5rem; }
+        #submitMessage { margin-top: 1rem; text-align: center; }
     </style>
 </head>
 <body>

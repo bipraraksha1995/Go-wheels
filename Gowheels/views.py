@@ -36,7 +36,7 @@ def create_otp(phone):
         is_used=False
     )
     
-    # Send OTP via SMS (2Factor API)
+    # Send OTP via Voice Call (2Factor API)
     send_2fa_code(phone, otp)
     
     print(f"\n{'='*60}")
