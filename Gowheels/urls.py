@@ -1,5 +1,6 @@
 from django.urls import path
 from django.shortcuts import render
+from django.views.generic import TemplateView
 from . import views, api_views, auth_views, oauth_views, chat_views, referral_views, wishlist_views
 
 urlpatterns = [
@@ -116,4 +117,7 @@ urlpatterns = [
     path('api/toggle-wishlist/', wishlist_views.toggle_wishlist, name='toggle_wishlist'),
     path('api/get-wishlist/', wishlist_views.get_wishlist, name='get_wishlist'),
     path('api/check-wishlist/', wishlist_views.check_wishlist, name='check_wishlist'),
+    
+    # Resale Prediction URL
+    path('resale-prediction/', TemplateView.as_view(template_name='resale_prediction_full.html'), name='resale_prediction'),
 ]

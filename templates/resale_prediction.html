@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resale Value Prediction</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            padding: 2rem;
+            border: 1px solid #3a3a3a;
+        }
+        
+        h1 {
+            color: #ffc107;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        .prediction-card {
+            background: #1e1e1e;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .price-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: #252525;
+        }
+        
+        .price-item {
+            text-align: center;
+        }
+        
+        .price-label {
+            color: #999;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .price-value {
+            color: #ffc107;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .depreciation {
+            color: #f44336;
+        }
+        
+        .factors {
+            margin: 2rem 0;
+        }
+        
+        .factor-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            background: #252525;
+        }
+        
+        .factor-label {
+            color: #ccc;
+        }
+        
+        .factor-value {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .confidence-bar {
+            margin: 2rem 0;
+        }
+        
+        .confidence-label {
+            color: #999;
+            margin-bottom: 0.5rem;
+        }
+        
+        .bar-container {
+            width: 100%;
+            height: 30px;
+            background: #252525;
+            border-radius: 0;
+            overflow: hidden;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffc107, #ffcd38);
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e1e1e;
+            font-weight: bold;
+        }
+        
+        .chart {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #252525;
+        }
+        
+        .chart-title {
+            color: #ffc107;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .year-bar {
+            display: flex;
+            align-items: center;
+            margin: 1rem 0;
+        }
+        
+        .year-label {
+            width: 80px;
+            color: #999;
+        }
+        
+        .year-value-bar {
+            flex: 1;
+            height: 30px;
+            background: #1e1e1e;
+            position: relative;
+            margin: 0 1rem;
+        }
+        
+        .year-value-fill {
+            height: 100%;
+            background: #ffc107;
+            transition: width 0.5s ease;
+        }
+        
+        .year-amount {
+            color: #ffc107;
+            font-weight: bold;
+            min-width: 100px;
+        }
+        
+        .input-group {
+            margin: 1rem 0;
+        }
+        
+        .input-group label {
+            display: block;
+            color: #ffc107;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+        
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 0.8rem;
+            background: #1e1e1e;
+            border: 1px solid #3a3a3a;
+            color: #e0e0e0;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            background: #ffc107;
+            color: #1e1e1e;
+            padding: 1rem 2rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #ffcd38;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔮 Resale Value Prediction</h1>
+        
+        <div class="input-group">
+            <label>Vehicle ID</label>
+            <input type="number" id="vehicleId" placeholder="Enter vehicle ID" value="1">
+        </div>
+        
+        <div class="input-group">
+            <label>Years to Predict</label>
+            <input type="number" id="years" placeholder="Years" value="2" min="1" max="10">
+        </div>
+        
+        <div class="input-group">
+            <label>Condition</label>
+            <select id="condition">
+                <option value="excellent">Excellent</option>
+                <option value="good" selected>Good</option>
+                <option value="fair">Fair</option>
+                <option value="poor">Poor</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label>Mileage (km)</label>
+            <input type="number" id="mileage" placeholder="Total mileage" value="20000">
+        </div>
+        
+        <div class="input-group">
+            <label>Number of Accidents</label>
+            <input type="number" id="accidents" placeholder="Accidents" value="0" min="0">
+        </div>
+        
+        <button class="btn" onclick="predictResale()">Calculate Resale Value</button>
+        
+        <div id="results" style="display: none;">
+            <div class="prediction-card">
+                <h2 style="color: #ffc107; margin-bottom: 1rem;">Prediction Results</h2>
+                
+                <div class="price-display">
+                    <div class="price-item">
+                        <div class="price-label">Current Price</div>
+                        <div class="price-value" id="currentPrice">₹0</div>
+                    </div>
+                    <div class="price-item">
+                        <div class="price-label">Predicted Value</div>
+                        <div class="price-value" id="predictedPrice">₹0</div>
+                    </div>
+                    <div class="price-item">
+                        <div class="price-label">Depreciation</div>
+                        <div class="price-value depreciation" id="depreciation">₹0</div>
+                    </div>
+                </div>
+                
+                <div class="confidence-bar">
+                    <div class="confidence-label">Prediction Confidence</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" id="confidenceBar" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                
+                <div class="factors">
+                    <h3 style="color: #ffc107; margin-bottom: 1rem;">Impact Factors</h3>
+                    <div class="factor-item">
+                        <span class="factor-label">Base Depreciation Rate</span>
+                        <span class="factor-value" id="baseRate">-</span>
+                    </div>
+                    <div class="factor-item">
+                        <span class="factor-label">Brand Retention</span>
+                        <span class="factor-value" id="brandRetention">-</span>
+                    </div>
+                    <div class="factor-item">
+                        <span class="factor-label">Condition Impact</span>
+                        <span class="factor-value" id="conditionImpact">-</span>
+                    </div>
+                    <div class="factor-item">
+                        <span class="factor-label">Mileage Impact</span>
+                        <span class="factor-value" id="mileageImpact">-</span>
+                    </div>
+                    <div class="factor-item">
+                        <span class="factor-label">Accident Impact</span>
+                        <span class="factor-value" id="accidentImpact">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart">
+                <div class="chart-title">5-Year Value Projection</div>
+                <div id="yearlyChart"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        async function predictResale() {
+            const vehicleId = document.getElementById('vehicleId').value;
+            const years = document.getElementById('years').value;
+            const condition = document.getElementById('condition').value;
+            const mileage = document.getElementById('mileage').value;
+            const accidents = document.getElementById('accidents').value;
+            
+            try {
+                // Get prediction
+                const response = await fetch('/api/predict-resale/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        vehicle_id: parseInt(vehicleId),
+                        years: parseInt(years),
+                        condition: condition,
+                        mileage: parseInt(mileage),
+                        accidents: parseInt(accidents)
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data.prediction);
+                    
+                    // Get yearly predictions
+                    const yearlyResponse = await fetch('/api/predict-resale-yearly/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            vehicle_id: parseInt(vehicleId),
+                            years_range: 5,
+                            condition: condition
+                        })
+                    });
+                    
+                    const yearlyData = await yearlyResponse.json();
+                    if (yearlyData.success) {
+                        displayYearlyChart(yearlyData.predictions, data.prediction.current_price);
+                    }
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function displayResults(prediction) {
+            document.getElementById('results').style.display = 'block';
+            
+            document.getElementById('currentPrice').textContent = 
+                '₹' + prediction.current_price.toLocaleString('en-IN');
+            document.getElementById('predictedPrice').textContent = 
+                '₹' + prediction.predicted_resale_value.toLocaleString('en-IN');
+            document.getElementById('depreciation').textContent = 
+                '-₹' + prediction.total_depreciation.toLocaleString('en-IN') + 
+                ' (' + prediction.depreciation_percentage + '%)';
+            
+            const confidenceBar = document.getElementById('confidenceBar');
+            confidenceBar.style.width = prediction.confidence_score + '%';
+            confidenceBar.textContent = prediction.confidence_score + '%';
+            
+            document.getElementById('baseRate').textContent = prediction.factors.base_depreciation_rate;
+            document.getElementById('brandRetention').textContent = prediction.factors.brand_retention;
+            document.getElementById('conditionImpact').textContent = prediction.factors.condition_impact;
+            document.getElementById('mileageImpact').textContent = prediction.factors.mileage_impact;
+            document.getElementById('accidentImpact').textContent = prediction.factors.accident_impact;
+        }
+        
+        function displayYearlyChart(predictions, currentPrice) {
+            const chartDiv = document.getElementById('yearlyChart');
+            chartDiv.innerHTML = '';
+            
+            predictions.forEach(pred => {
+                const percentage = (pred.value / currentPrice) * 100;
+                
+                const yearBar = document.createElement('div');
+                yearBar.className = 'year-bar';
+                yearBar.innerHTML = `
+                    <div class="year-label">Year ${pred.year}</div>
+                    <div class="year-value-bar">
+                        <div class="year-value-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <div class="year-amount">₹${pred.value.toLocaleString('en-IN')}</div>
+                `;
+                chartDiv.appendChild(yearBar);
+            });
+        }
+    </script>
+</body>
+</html>

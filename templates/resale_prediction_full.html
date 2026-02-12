@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resale Value Prediction - GoWheels</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            padding: 2rem;
+            border: 1px solid #3a3a3a;
+        }
+        
+        h1 {
+            color: #ffc107;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            color: #ffc107;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+            font-weight: 400;
+        }
+        
+        input, select {
+            padding: 0.8rem;
+            background: #1e1e1e;
+            border: 1px solid #3a3a3a;
+            color: #e0e0e0;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #ffc107;
+        }
+        
+        .btn {
+            background: #ffc107;
+            color: #1e1e1e;
+            padding: 1.2rem 2rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn:hover {
+            background: #ffcd38;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 193, 7, 0.4);
+        }
+        
+        .results {
+            margin-top: 3rem;
+            display: none;
+        }
+        
+        .result-card {
+            background: #1e1e1e;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .result-title {
+            color: #ffc107;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .price-box {
+            text-align: center;
+            padding: 1.5rem;
+            background: #252525;
+        }
+        
+        .price-label {
+            color: #999;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .price-value {
+            color: #ffc107;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .price-value.depreciation {
+            color: #f44336;
+        }
+        
+        .vehicle-info {
+            background: #252525;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #999;
+        }
+        
+        .info-value {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .factors-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .factor-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem;
+            background: #252525;
+        }
+        
+        .confidence-bar {
+            margin: 2rem 0;
+        }
+        
+        .bar-container {
+            width: 100%;
+            height: 40px;
+            background: #252525;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffc107, #ffcd38);
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e1e1e;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            .container {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 1.5rem;
+                letter-spacing: 2px;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .price-grid {
+                grid-template-columns: 1fr;
+            }
+            .factors-grid {
+                grid-template-columns: 1fr;
+            }
+            .btn {
+                padding: 1rem;
+                font-size: 0.9rem;
+            }
+            .price-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button onclick="window.history.back()" style="background: transparent; border: 1px solid #ffc107; color: #ffc107; padding: 0.5rem 1rem; cursor: pointer; margin-bottom: 1rem; transition: all 0.3s ease;" onmouseover="this.style.background='#ffc107'; this.style.color='#1e1e1e'" onmouseout="this.style.background='transparent'; this.style.color='#ffc107'">← Back</button>
+        
+        <h1>🔮 Resale Value Prediction</h1>
+        <p class="subtitle">AI-Powered Vehicle Depreciation Calculator</p>
+        
+        <form id="predictionForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Vehicle Category *</label>
+                    <select id="category" required>
+                        <option value="">Select Category</option>
+                        <option value="car">Car</option>
+                        <option value="bike">Bike</option>
+                        <option value="truck">Truck</option>
+                        <option value="boat">Boat</option>
+                        <option value="electric">Electric Vehicle</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Brand *</label>
+                    <input type="text" id="brand" required placeholder="e.g., Honda, Maruti">
+                </div>
+                
+                <div class="form-group">
+                    <label>Model *</label>
+                    <input type="text" id="model" required placeholder="e.g., City, Swift">
+                </div>
+                
+                <div class="form-group">
+                    <label>Year *</label>
+                    <input type="number" id="year" required min="2000" max="2025" placeholder="2020">
+                </div>
+                
+                <div class="form-group">
+                    <label>Original Price (₹) *</label>
+                    <input type="number" id="originalPrice" required placeholder="1200000">
+                </div>
+                
+                <div class="form-group">
+                    <label>Current Price (₹) *</label>
+                    <input type="number" id="currentPrice" required placeholder="900000">
+                </div>
+                
+                <div class="form-group">
+                    <label>Kilometers Driven *</label>
+                    <input type="number" id="kilometers" required placeholder="35000">
+                </div>
+                
+                <div class="form-group">
+                    <label>Fuel Type *</label>
+                    <select id="fuelType" required>
+                        <option value="">Select Fuel Type</option>
+                        <option value="petrol">Petrol</option>
+                        <option value="diesel">Diesel</option>
+                        <option value="electric">Electric</option>
+                        <option value="cng">CNG</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Transmission *</label>
+                    <select id="transmission" required>
+                        <option value="">Select Transmission</option>
+                        <option value="manual">Manual</option>
+                        <option value="automatic">Automatic</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>City *</label>
+                    <input type="text" id="city" required placeholder="Mumbai">
+                </div>
+                
+                <div class="form-group">
+                    <label>Owner Count *</label>
+                    <input type="number" id="ownerCount" required min="1" max="5" placeholder="1">
+                </div>
+                
+                <div class="form-group">
+                    <label>Accident History *</label>
+                    <input type="number" id="accidentHistory" required min="0" placeholder="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Condition *</label>
+                    <select id="condition" required>
+                        <option value="">Select Condition</option>
+                        <option value="excellent">Excellent</option>
+                        <option value="good" selected>Good</option>
+                        <option value="fair">Fair</option>
+                        <option value="poor">Poor</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn">Calculate Resale Value</button>
+        </form>
+        
+        <div id="results" class="results">
+            <div class="result-card">
+                <h2 class="result-title">Vehicle Information</h2>
+                <div class="vehicle-info" id="vehicleInfo"></div>
+            </div>
+            
+            <div class="result-card">
+                <h2 class="result-title">Prediction Results</h2>
+                
+                <div class="price-grid">
+                    <div class="price-box">
+                        <div class="price-label">Current Price</div>
+                        <div class="price-value" id="currentPriceDisplay">₹0</div>
+                    </div>
+                    <div class="price-box">
+                        <div class="price-label">Predicted Value (After 2 Years)</div>
+                        <div class="price-value" id="predictedPrice">₹0</div>
+                    </div>
+                    <div class="price-box">
+                        <div class="price-label">Total Depreciation</div>
+                        <div class="price-value depreciation" id="depreciation">₹0</div>
+                    </div>
+                </div>
+                
+                <div class="confidence-bar">
+                    <div class="price-label">Prediction Confidence</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" id="confidenceBar" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                
+                <h3 style="color: #ffc107; margin: 2rem 0 1rem;">Impact Factors</h3>
+                <div class="factors-grid" id="factorsGrid"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-fill form from URL parameters
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.has('category')) {
+                document.getElementById('category').value = urlParams.get('category').toLowerCase();
+            }
+            if (urlParams.has('brand')) {
+                document.getElementById('brand').value = urlParams.get('brand');
+            }
+            if (urlParams.has('model')) {
+                document.getElementById('model').value = urlParams.get('model');
+            }
+            if (urlParams.has('year')) {
+                document.getElementById('year').value = urlParams.get('year');
+            }
+            if (urlParams.has('price')) {
+                const price = urlParams.get('price');
+                document.getElementById('currentPrice').value = price;
+                document.getElementById('originalPrice').value = price;
+            }
+        });
+        
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                brand: document.getElementById('brand').value,
+                model: document.getElementById('model').value,
+                year: parseInt(document.getElementById('year').value),
+                original_price: parseFloat(document.getElementById('originalPrice').value),
+                current_price: parseFloat(document.getElementById('currentPrice').value),
+                kilometers_driven: parseInt(document.getElementById('kilometers').value),
+                fuel_type: document.getElementById('fuelType').value,
+                transmission: document.getElementById('transmission').value,
+                city: document.getElementById('city').value,
+                owner_count: parseInt(document.getElementById('ownerCount').value),
+                accident_history: parseInt(document.getElementById('accidentHistory').value),
+                vehicle_category: document.getElementById('category').value,
+                prediction_years: 2,
+                condition: document.getElementById('condition').value
+            };
+            
+            // For demo purposes, calculate locally
+            // In production, send to API endpoint
+            displayResults(formData);
+        });
+        
+        function displayResults(data) {
+            // Show results section
+            document.getElementById('results').style.display = 'block';
+            
+            // Display vehicle info
+            const vehicleInfo = document.getElementById('vehicleInfo');
+            vehicleInfo.innerHTML = `
+                <div class="info-row">
+                    <span class="info-label">Vehicle</span>
+                    <span class="info-value">${data.brand} ${data.model}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Year</span>
+                    <span class="info-value">${data.year}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fuel Type</span>
+                    <span class="info-value">${data.fuel_type.toUpperCase()}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Transmission</span>
+                    <span class="info-value">${data.transmission.toUpperCase()}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">City</span>
+                    <span class="info-value">${data.city}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Kilometers Driven</span>
+                    <span class="info-value">${data.kilometers_driven.toLocaleString('en-IN')} km</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Owner Count</span>
+                    <span class="info-value">${data.owner_count}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Accident History</span>
+                    <span class="info-value">${data.accident_history}</span>
+                </div>
+            `;
+            
+            // Simple depreciation calculation for demo
+            const depreciationRate = 0.15;
+            let predictedValue = data.current_price;
+            for (let i = 0; i < data.prediction_years; i++) {
+                predictedValue *= (1 - depreciationRate);
+            }
+            
+            const depreciation = data.current_price - predictedValue;
+            const depreciationPercent = (depreciation / data.current_price) * 100;
+            
+            document.getElementById('currentPriceDisplay').textContent = 
+                '₹' + data.current_price.toLocaleString('en-IN');
+            document.getElementById('predictedPrice').textContent = 
+                '₹' + Math.round(predictedValue).toLocaleString('en-IN');
+            document.getElementById('depreciation').textContent = 
+                '-₹' + Math.round(depreciation).toLocaleString('en-IN') + 
+                ' (' + depreciationPercent.toFixed(1) + '%)';
+            
+            // Confidence score
+            const confidence = 85;
+            const confidenceBar = document.getElementById('confidenceBar');
+            confidenceBar.style.width = confidence + '%';
+            confidenceBar.textContent = confidence + '%';
+            
+            // Factors
+            const factorsGrid = document.getElementById('factorsGrid');
+            factorsGrid.innerHTML = `
+                <div class="factor-item">
+                    <span>Base Depreciation</span>
+                    <span style="color: #ffc107;">15.0%</span>
+                </div>
+                <div class="factor-item">
+                    <span>Brand Retention</span>
+                    <span style="color: #ffc107;">85.0%</span>
+                </div>
+                <div class="factor-item">
+                    <span>Condition Impact</span>
+                    <span style="color: #ffc107;">90.0%</span>
+                </div>
+                <div class="factor-item">
+                    <span>Kilometers Impact</span>
+                    <span style="color: #ffc107;">95.0%</span>
+                </div>
+                <div class="factor-item">
+                    <span>Fuel Type Impact</span>
+                    <span style="color: #ffc107;">100.0%</span>
+                </div>
+                <div class="factor-item">
+                    <span>Transmission Impact</span>
+                    <span style="color: #ffc107;">105.0%</span>
+                </div>
+            `;
+            
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

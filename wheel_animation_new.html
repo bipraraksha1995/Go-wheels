@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New Wheel Animation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1e1e1e;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ORBIT ANIMATION */
+        @keyframes orbit {
+            0% { transform: translate(-50%, -50%) rotate(0deg) translateX(200px) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg) translateX(200px) rotate(-360deg); }
+        }
+
+        .wheel-orbit {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            font-size: 2.5rem;
+            z-index: 9999;
+            animation: orbit 8s linear infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 193, 7, 0.8));
+        }
+
+        .wheel-orbit:nth-child(1) { animation-delay: 0s; }
+        .wheel-orbit:nth-child(2) { animation-delay: -2s; }
+        .wheel-orbit:nth-child(3) { animation-delay: -4s; }
+        .wheel-orbit:nth-child(4) { animation-delay: -6s; }
+
+        /* WAVE ANIMATION */
+        @keyframes wave {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-30px) rotate(90deg); }
+            50% { transform: translateY(0) rotate(180deg); }
+            75% { transform: translateY(30px) rotate(270deg); }
+        }
+
+        .wheel-wave {
+            position: fixed;
+            bottom: 50px;
+            font-size: 3rem;
+            z-index: 9999;
+            animation: wave 2s ease-in-out infinite;
+            filter: drop-shadow(0 10px 30px rgba(255, 193, 7, 0.6));
+        }
+
+        .wheel-wave:nth-child(5) { left: 10%; animation-delay: 0s; }
+        .wheel-wave:nth-child(6) { left: 30%; animation-delay: 0.2s; }
+        .wheel-wave:nth-child(7) { left: 50%; animation-delay: 0.4s; }
+        .wheel-wave:nth-child(8) { left: 70%; animation-delay: 0.6s; }
+        .wheel-wave:nth-child(9) { left: 90%; animation-delay: 0.8s; }
+
+        /* CENTER 3D PULSE */
+        @keyframes pulse3D {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1) rotateY(0deg);
+                filter: drop-shadow(0 0 20px rgba(255, 193, 7, 0.5));
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.5) rotateY(180deg);
+                filter: drop-shadow(0 0 60px rgba(255, 193, 7, 1));
+            }
+        }
+
+        .wheel-center {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            font-size: 5rem;
+            z-index: 10000;
+            animation: pulse3D 3s ease-in-out infinite;
+            transform-style: preserve-3d;
+        }
+
+        /* SPIRAL ANIMATION */
+        @keyframes spiral {
+            0% { 
+                transform: rotate(0deg) translateX(0) scale(0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% { 
+                transform: rotate(1080deg) translateX(400px) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        .wheel-spiral {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            font-size: 2rem;
+            z-index: 9998;
+            animation: spiral 4s ease-out infinite;
+        }
+
+        .wheel-spiral:nth-child(10) { animation-delay: 0s; }
+        .wheel-spiral:nth-child(11) { animation-delay: 0.5s; }
+        .wheel-spiral:nth-child(12) { animation-delay: 1s; }
+        .wheel-spiral:nth-child(13) { animation-delay: 1.5s; }
+        .wheel-spiral:nth-child(14) { animation-delay: 2s; }
+        .wheel-spiral:nth-child(15) { animation-delay: 2.5s; }
+        .wheel-spiral:nth-child(16) { animation-delay: 3s; }
+        .wheel-spiral:nth-child(17) { animation-delay: 3.5s; }
+    </style>
+</head>
+<body>
+    <!-- Orbiting wheels -->
+    <div class="wheel-orbit">🛞</div>
+    <div class="wheel-orbit">🛞</div>
+    <div class="wheel-orbit">🛞</div>
+    <div class="wheel-orbit">🛞</div>
+
+    <!-- Wave wheels at bottom -->
+    <div class="wheel-wave">🛞</div>
+    <div class="wheel-wave">🛞</div>
+    <div class="wheel-wave">🛞</div>
+    <div class="wheel-wave">🛞</div>
+    <div class="wheel-wave">🛞</div>
+
+    <!-- Spiral wheels -->
+    <div class="wheel-spiral">🛞</div>
+    <div class="wheel-spiral">🛞</div>
+    <div class="wheel-spiral">🛞</div>
+    <div class="wheel-spiral">🛞</div>
+    <div class="wheel-spiral">🛞</div>
+    <div class="wheel-spiral">🛞</div>
+    <div class="wheel-spiral">🛞</div>
+    <div class="wheel-spiral">🛞</div>
+
+    <!-- Center pulsing wheel -->
+    <div class="wheel-center">🛞</div>
+</body>
+</html>
