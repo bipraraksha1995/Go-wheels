@@ -7,11 +7,12 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     gcc \
-    default-libmysqlclient-dev \
+    build-essential \
     pkg-config \
+    default-libmysqlclient-dev \
     libssl-dev \
     libffi-dev \
-    build-essential \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy project folder properly
