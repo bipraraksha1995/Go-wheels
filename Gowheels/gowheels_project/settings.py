@@ -55,6 +55,12 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD', default=''),
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='3306'),
+        'OPTIONS': {
+            'ssl': {'ssl_disabled': True},
+            'auth_plugin_map': {
+                'caching_sha2_password': None
+            }
+        },
     }
 }
 
